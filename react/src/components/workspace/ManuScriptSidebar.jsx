@@ -1,5 +1,6 @@
 import React from 'react';
-import { Icons } from "../Icons"
+import { Icons } from "../Icons";
+
 /**
  * High-Fidelity Chapters & Narrative Blueprint Tree Sidebar
  */
@@ -7,7 +8,7 @@ const ManuscriptSidebar = ({
   isOpen,
   setIsOpen,
   novel,
-  chapters = [], // ⚡ FIX: Default value prevents the 'length of undefined' error
+  chapters = [], 
   activeChapter,
   canvasFocus,
   setCanvasFocus,
@@ -47,7 +48,10 @@ const ManuscriptSidebar = ({
             }`}
           >
             <div className="flex items-start gap-2.5">
-              <BookOpen size={18} className="text-purple-600 shrink-0 mt-0.5" />
+              {/* ⚡ FIXED: Inline robust SVG replaces missing BookOpen component */}
+              <svg className="w-[18px] h-[18px] text-purple-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+              </svg>
               <div>
                 <h2 className="text-sm font-black text-gray-900 tracking-tight line-clamp-2">
                   {novel?.title || "Untitled Blueprint"}
@@ -111,7 +115,16 @@ const ManuscriptSidebar = ({
           isOpen ? 'left-72' : 'left-0'
         }`}
       >
-        {isOpen ? <ChevronLeft size={13} /> : <ChevronRight size={13} />}
+        {/* ⚡ FIXED: Inline robust SVGs replace missing ChevronLeft and ChevronRight components */}
+        {isOpen ? (
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          </svg>
+        ) : (
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+          </svg>
+        )}
       </button>
     </div>
   );

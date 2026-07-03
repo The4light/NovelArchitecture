@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icons } from "../Icons"
+import { Icons } from "../Icons";
 
 /**
  * High-Fidelity World-Building Codex Matrix & Scratchpad Panel
@@ -11,7 +11,7 @@ const CodexSidebar = ({
   setActiveTab,
   isCreatingEntry,
   setIsCreatingEntry,
-  codexEntries,
+  codexEntries = [], // Safeguard array defaulting
   selectedEntry,
   entryTitle,
   setEntryTitle,
@@ -26,6 +26,8 @@ const CodexSidebar = ({
   onSpawnSticky,
   onToggleFloatStatus
 }) => {
+  const safeEntries = codexEntries || [];
+
   return (
     <div className="relative flex h-full z-30">
       {/* Floating Toggle Drawer Switch Trigger */}
@@ -35,7 +37,16 @@ const CodexSidebar = ({
           isOpen ? 'right-80 md:right-96' : 'right-0'
         }`}
       >
-        {isOpen ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
+        {/* ⚡ FIXED: Inline SVGs replace missing ChevronRight and ChevronLeft components */}
+        {isOpen ? (
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+          </svg>
+        ) : (
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          </svg>
+        )}
       </button>
 
       {/* Main Drawer Container Context */}
@@ -109,7 +120,10 @@ const CodexSidebar = ({
                     onClick={onSaveEntry}
                     className="flex-1 py-3.5 bg-black text-white font-black text-xs tracking-widest uppercase rounded-xl hover:bg-purple-600 transition-all flex items-center justify-center gap-1.5 shadow-sm"
                   >
-                    <Check size={13} strokeWidth={3} />
+                    {/* ⚡ FIXED: Inline Check SVG */}
+                    <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
                     Commit Node
                   </button>
                   
@@ -118,7 +132,10 @@ const CodexSidebar = ({
                       onClick={(e) => { onDeleteEntry(selectedEntry.id, e); setIsCreatingEntry(false); }}
                       className="px-4.5 bg-red-50 text-red-600 border border-red-100 rounded-xl hover:bg-red-600 hover:text-white transition-all flex items-center justify-center"
                     >
-                      <Trash2 size={15} />
+                      {/* ⚡ FIXED: Inline Trash2 SVG */}
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                      </svg>
                     </button>
                   )}
                 </div>
@@ -137,7 +154,10 @@ const CodexSidebar = ({
                       onClick={onSpawnSticky} 
                       className="text-[9px] font-black text-purple-600 hover:text-white bg-purple-50 hover:bg-purple-600 px-3 py-1.5 rounded-xl uppercase tracking-widest transition-all duration-200 flex items-center gap-1 border border-purple-100 shadow-sm"
                     >
-                      <Plus size={11} strokeWidth={3} />
+                      {/* ⚡ FIXED: Inline Plus SVG */}
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                      </svg>
                       <span>Launch Sticky</span>
                     </button>
                   ) : (
@@ -150,13 +170,13 @@ const CodexSidebar = ({
                   )}
                 </div>
 
-                {codexEntries.filter(e => e.category === activeTab).length === 0 ? (
+                {safeEntries.filter(e => e.category === activeTab).length === 0 ? (
                   <p className="text-center text-xs font-medium text-gray-400 py-10 italic border border-dashed rounded-2xl bg-white border-gray-100">
                     No system entries registered.
                   </p>
                 ) : (
                   <div className="space-y-2.5">
-                    {codexEntries
+                    {safeEntries
                       .filter(e => e.category === activeTab)
                       .map((entry) => (
                         <div
@@ -180,14 +200,22 @@ const CodexSidebar = ({
                                 className="text-[9px] font-black uppercase tracking-wider px-2 py-1 bg-gray-50 hover:bg-black hover:text-white rounded-md text-gray-400 transition-all flex items-center gap-0.5 border border-gray-100/50"
                               >
                                 <span>{entry.is_floating ? 'Dock' : 'Float'}</span>
-                                {!entry.is_floating && <ArrowUpRight size={9} />}
+                                {/* ⚡ FIXED: Inline ArrowUpRight SVG */}
+                                {!entry.is_floating && (
+                                  <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
+                                  </svg>
+                                )}
                               </button>
                             )}
                             <button
                               onClick={(e) => onDeleteEntry(entry.id, e)}
                               className="p-1 text-gray-300 hover:text-red-600 hover:bg-red-50 rounded-md transition-all md:opacity-0 md:group-hover:opacity-100"
                             >
-                              <Trash2 size={13} />
+                              {/* ⚡ FIXED: Inline Trash2 SVG */}
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                              </svg>
                             </button>
                           </div>
                         </div>
