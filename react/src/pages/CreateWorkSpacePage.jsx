@@ -7,7 +7,7 @@ import { supabase } from '../lib/supabaseClient';
 
 // Import our decoupled layout layers
 import PublishControls from '../components/workspace/PublishControls';
-import ManuscriptSidebar from '../components/workspace/ManuscriptSidebar';
+import ManuscriptSidebar from '../components/workspace/ManuScriptSidebar';
 import CodexSidebar from '../components/workspace/CodexSidebar';
 
 const CreationWorkspacePage = () => {
