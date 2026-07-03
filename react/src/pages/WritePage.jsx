@@ -31,21 +31,22 @@ const WriteLanding = ({ onJoin }) => (
 );
 
 /* --- COMPONENT 2: THE AUTHOR WORKSPACE DASHBOARD --- */
-const WriteDashboard = ({ navigate }) => {
+const WriteDashboard = ({ navigate, userId }) => {
   const [novels, setNovels] = useState([]);
   const [loadingNovels, setLoadingNovels] = useState(true);
 
   useEffect(() => {
     const fetchNovels = async () => {
+      if (!userId) return;
+      
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) return;
-
+        setLoadingNovels(true);
+        // ⚡ SAFE SYSTEM SYNC: Fetch manuscripts matching the exact authenticated author context
         const { data, error } = await supabase
           .from('novels')
           .select('*')
-          .eq('author_id', session.user.id)
-          .order('updated_at', { ascending: false });
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false });
 
         if (error) throw error;
         setNovels(data || []);
@@ -57,7 +58,7 @@ const WriteDashboard = ({ navigate }) => {
     };
 
     fetchNovels();
-  }, []);
+  }, [userId]);
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -133,7 +134,6 @@ const WritePage = () => {
   const navigate = useNavigate();
   const { user, loading } = useContext(AuthContext); 
 
-  // ⚡ CRITICAL CHECKPOINT: Pause navigation and rendering if Supabase hasn't verified the gateway session yet
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center">
@@ -145,13 +145,16 @@ const WritePage = () => {
     );
   }
 
+  // Safe deduction of the authenticated user ID string
+  const activeUserId = user?.id || user?.user?.id || null;
+
   return (
     <div className="min-h-screen bg-gray-50/40 selection:bg-purple-500/10">
       <Navbar />
       <div className="pt-24">
-        {/* If user session token exists, display the Vault Dashboard. Otherwise, pull up the Landing Frame */}
-        {user ? (
-          <WriteDashboard navigate={navigate} />
+        {/* Pass down the verified activeUserId to guarantee clean data fetching */}
+        {activeUserId ? (
+          <WriteDashboard navigate={navigate} userId={activeUserId} />
         ) : (
           <WriteLanding onJoin={() => navigate('/auth')} />
         )}

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Navbar from '../components/Navbar';
 import FloatingSticky from '../components/FloatingSticky';
 import { AuthContext } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
@@ -232,7 +231,7 @@ const CreationWorkspacePage = () => {
 
   return (
     <div className="min-h-screen bg-white flex flex-col h-screen overflow-hidden relative select-none">
-      <Navbar />
+      
 
       {/* Floating Notes Engine */}
       {codexEntries.filter(e => e.is_floating).map((note) => (

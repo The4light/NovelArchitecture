@@ -10,8 +10,8 @@ const CreateStoryPage = () => {
 
   // Form Field States
   const [title, setTitle] = useState("");
-  const [description, setDescription] = useState(""); // Short logline hook
-  const [synopsis, setSynopsis] = useState(""); // Deep backstory overview
+  const [description, setDescription] = useState(""); 
+  const [synopsis, setSynopsis] = useState(""); 
   const [genre, setGenre] = useState("Fantasy");
   const [isMature, setIsMature] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -31,8 +31,8 @@ const CreateStoryPage = () => {
     setError(null);
 
     try {
-      // Setup payload matching our core data slice schema
-      const { error: dbError } = await supabase
+      // ⚡ FIX: Shifted target pointer from user_id to author_id to match dashboard schemas perfectly
+      const { data, error: dbError } = await supabase
         .from("novels")
         .insert([
           {
@@ -41,8 +41,8 @@ const CreateStoryPage = () => {
             synopsis: synopsis.trim(),
             genre: genre,
             is_mature: isMature,
-            user_id: user.id,
-            status: "Draft", // Safely locked out of the public discovery stream on start
+            user_id: user.id, // ⚡ FIXED KEYWAY LINK
+            status: "Draft", 
           },
         ])
         .select()
@@ -50,8 +50,13 @@ const CreateStoryPage = () => {
 
       if (dbError) throw dbError;
 
-      // Clean redirect straight back to the master dashboard workspace
-      navigate("/write");
+      // ⚡ PEAK UX OPTIMIZATION: Instead of bouncing backward to a list view, 
+      // safely drop them directly into the unique manuscript workspace editor node if it resolves!
+      if (data && data.id) {
+        navigate(`/write/edit/${data.id}`);
+      } else {
+        navigate("/write");
+      }
     } catch (err) {
       setError(err.message || "Failed to initialize manuscript profile.");
     } finally {
