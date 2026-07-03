@@ -1,5 +1,5 @@
 import React from 'react';
-import { Globe, BookOpen } from 'lucide-react';
+import { Icon } from "../Icons"
 
 /**
  * High-Fidelity Publish Action HUD Layout
