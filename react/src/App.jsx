@@ -11,7 +11,7 @@ import SearchPage from "./pages/SearchPage";
 import { AuthProvider } from './context/AuthContext.jsx';
 import PublishStoryPage from "./pages/PublishStoryPage.jsx";
 import CreationWorkspacePage from "./pages/CreateWorkSpacePage.jsx";
-
+import AuthCallback from "./pages/AuthCallback";
 
 export default function App() {
   return (
@@ -26,6 +26,7 @@ export default function App() {
         <Route path="/write/edit/:id" element={<CreationWorkspacePage />} />
         <Route path="/read" element={<ReadPage />} />
         <Route path="/auth" element={<AuthPage />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/library" element={<LibraryPage />} />
         <Route path="/search" element={<SearchPage />} />
         <Route path="/publish" element= {<PublishStoryPage/>} />

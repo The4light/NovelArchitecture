@@ -5,7 +5,7 @@ import { Icons } from '../components/Icons';
 import { AuthContext } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 
-/* --- COMPONENT 1: THE LANDING PAGE (Unchanged) --- */
+/* --- COMPONENT 1: THE LANDING PAGE --- */
 const WriteLanding = ({ onJoin }) => (
   <div className="animate-in fade-in duration-700">
     <header className="relative pt-20 pb-32 overflow-hidden bg-white">
@@ -19,118 +19,93 @@ const WriteLanding = ({ onJoin }) => (
         <p className="max-w-xl mx-auto text-xl text-gray-500 font-medium mb-12">
           Join a global community of creators. Write, publish, and grow your audience with NovelForge.
         </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <button 
-            onClick={onJoin}
-            className="w-full sm:w-auto px-10 py-5 bg-black text-white rounded-2xl font-black text-sm tracking-widest uppercase hover:bg-purple-700 transition-all shadow-2xl active:scale-95"
-          >
-            Start Writing for Free
-          </button>
-          <button className="w-full sm:w-auto px-10 py-5 bg-white border-2 border-gray-100 text-gray-900 rounded-2xl font-black text-sm tracking-widest uppercase hover:bg-gray-50 transition-all">
-            Browse Guide
-          </button>
-        </div>
+        <button
+          onClick={onJoin}
+          className="bg-black text-white px-10 py-5 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-purple-600 shadow-xl transition-all active:scale-95"
+        >
+          Create Your Studio Account
+        </button>
       </div>
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-purple-50/50 rounded-full blur-3xl -z-0"></div>
     </header>
-
-    <section className="max-w-7xl mx-auto px-6 py-24 border-t border-gray-50">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-        {[
-          { title: "Ownership", desc: "You keep 100% of the rights to your work.", icon: <Icons.Book /> },
-          { title: "Analytics", desc: "Track your readers in real-time.", icon: <Icons.TrendingUp /> },
-          { title: "Community", desc: "Direct feedback from a passionate audience.", icon: <Icons.User /> }
-        ].map((feature, i) => (
-          <div key={i} className="space-y-4 text-center md:text-left">
-            <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-black mx-auto md:mx-0">
-              {feature.icon}
-            </div>
-            <h3 className="text-xl font-black tracking-tight">{feature.title}</h3>
-            <p className="text-gray-500 font-medium leading-relaxed">{feature.desc}</p>
-          </div>
-        ))}
-      </div>
-    </section>
   </div>
 );
 
-/* --- COMPONENT 2: THE STUDIO DASHBOARD (Live Engine Mode) --- */
-const WriterStudio = ({ user }) => {
-  const navigate = useNavigate();
+/* --- COMPONENT 2: THE AUTHOR WORKSPACE DASHBOARD --- */
+const WriteDashboard = ({ navigate }) => {
   const [novels, setNovels] = useState([]);
-  const [fetching, setFetching] = useState(true);
-
-  // Fallback string calculation
-  const displayName = user?.user_metadata?.pen_name || user?.email?.split('@')[0] || 'Writer';
+  const [loadingNovels, setLoadingNovels] = useState(true);
 
   useEffect(() => {
-    const fetchMyNovels = async () => {
+    const fetchNovels = async () => {
       try {
-        // Query database filtering by active author authentication key
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+
         const { data, error } = await supabase
           .from('novels')
           .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
+          .eq('author_id', session.user.id)
+          .order('updated_at', { ascending: false });
 
         if (error) throw error;
         setNovels(data || []);
       } catch (err) {
-        console.error("Error loading studio items:", err.message);
+        console.error('Error fetching studio archive:', err.message);
       } finally {
-        setFetching(false);
+        setLoadingNovels(false);
       }
     };
 
-    fetchMyNovels();
-  }, [user.id]);
+    fetchNovels();
+  }, []);
 
   return (
-    <div className="animate-in slide-in-from-bottom-6 duration-700 max-w-7xl mx-auto px-6 py-16">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-6">
+    <div className="max-w-5xl mx-auto px-6 py-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex justify-between items-end mb-12 border-b border-gray-100 pb-6">
         <div>
-          <h1 className="text-5xl font-black text-gray-900 tracking-tighter mb-4">Writer Studio</h1>
-          <p className="text-gray-500 font-medium">Welcome back, <span className="text-purple-600 font-bold">{displayName}</span>.</p>
+          <h2 className="text-[10px] font-black uppercase tracking-widest text-purple-600 mb-1">Author Studio</h2>
+          <h1 className="text-3xl font-black text-gray-950 tracking-tight">Your Manuscript Vault</h1>
         </div>
-        <Link 
-          to="/write/create"
-          className="flex items-center gap-3 bg-black text-white px-8 py-4 rounded-2xl font-black text-xs tracking-widest uppercase hover:bg-purple-600 transition-all shadow-xl active:scale-95"
+        <button
+          onClick={() => navigate('/write/create')}
+          className="bg-black text-white px-6 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-purple-600 transition-all shadow-md flex items-center gap-2 active:scale-95"
         >
-          <Icons.Edit className="w-4 h-4" />
-          Create New Story
-        </Link>
+          <span>Forge New Story</span>
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-        <div className="p-8 rounded-[2rem] bg-gray-50 border border-gray-100">
-          <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Total Manuscripts</p>
-          <p className="text-3xl font-black text-gray-900">{fetching ? '...' : novels.length}</p>
-        </div>
-      </div>
-
-      <div className="space-y-6">
-        <h3 className="text-[11px] font-black uppercase tracking-widest text-gray-900">Active Manuscripts</h3>
-        
-        {fetching ? (
-          <p className="text-xs font-black uppercase tracking-widest text-gray-300 animate-pulse py-4">Querying database rows...</p>
+      <div className="grid gap-4">
+        {loadingNovels ? (
+          <div className="py-20 text-center border border-dashed border-gray-100 rounded-3xl bg-gray-50/30">
+            <div className="w-5 h-5 border-2 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+            <p className="text-xs font-black uppercase tracking-widest text-gray-400">Opening Archive Files...</p>
+          </div>
         ) : novels.length === 0 ? (
-          <div className="p-12 border-2 border-dashed border-gray-100 rounded-3xl text-center max-w-md mx-auto">
-            <p className="text-sm font-black text-gray-900 uppercase tracking-widest mb-1">No Manuscripts Found</p>
-            <p className="text-gray-400 font-medium text-xs mb-6">Initialize your configuration record profile to begin writing.</p>
-            <Link to="/write/create" className="bg-black text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-purple-600 transition-all">
-              Forge Initial Script
-            </Link>
+          <div className="text-center py-20 border border-dashed border-gray-200 rounded-3xl bg-white p-8">
+            <h3 className="text-sm font-black uppercase text-gray-900 tracking-wider mb-2">The Archive is Empty</h3>
+            <p className="text-gray-400 text-xs font-medium max-w-xs mx-auto mb-6">You haven't forged any system manuscripts yet. Start your universe node today.</p>
+            <button
+              onClick={() => navigate('/write/create')}
+              className="border border-gray-200 hover:border-black text-gray-700 hover:text-black px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-colors"
+            >
+              Initialize First Draft
+            </button>
           </div>
         ) : (
           novels.map((novel) => (
-            <div key={novel.id} className="group flex items-center justify-between p-6 rounded-3xl border border-gray-100 hover:border-black transition-all">
-              <div className="flex items-center gap-6">
-                <div className="w-12 h-16 bg-gray-50 rounded-lg flex items-center justify-center text-gray-400 border border-gray-100">
-                   <Icons.Book className="w-5 h-5" />
+            <div
+              key={novel.id}
+              className="p-6 bg-white border border-gray-100 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:border-gray-300 transition-all flex justify-between items-center group"
+            >
+              <div className="flex gap-5 items-center">
+                <div className="w-12 h-16 bg-gray-50 border border-gray-100 rounded-lg flex items-center justify-center text-gray-300 group-hover:bg-purple-50 group-hover:border-purple-100 group-hover:text-purple-600 transition-colors shrink-0 shadow-sm">
+                  <Icons.Book className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-lg font-black text-gray-900 group-hover:text-purple-600 transition-colors">{novel.title}</h4>
-                  <div className="flex gap-4 mt-1 items-center">
+                  <h4 className="font-black text-gray-900 text-sm tracking-tight mb-1 group-hover:text-purple-600 transition-colors">
+                    {novel.title}
+                  </h4>
+                  <div className="flex items-center gap-3">
                     <span className="text-[10px] font-bold uppercase text-gray-400">{novel.genre}</span>
                     <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${novel.status === 'Published' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
                       {novel.status}
@@ -158,22 +133,29 @@ const WritePage = () => {
   const navigate = useNavigate();
   const { user, loading } = useContext(AuthContext); 
 
+  // ⚡ CRITICAL CHECKPOINT: Pause navigation and rendering if Supabase hasn't verified the gateway session yet
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <p className="text-xs font-black uppercase tracking-widest text-gray-400 animate-pulse">Loading Workspace...</p>
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center">
+        <div className="w-6 h-6 border-2 border-black border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400 animate-pulse">
+          Syncing Forge Gateways...
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gray-50/40 selection:bg-purple-500/10">
       <Navbar />
-      {user ? (
-        <WriterStudio user={user} />
-      ) : (
-        <WriteLanding onJoin={() => navigate('/auth')} />
-      )}
+      <div className="pt-24">
+        {/* If user session token exists, display the Vault Dashboard. Otherwise, pull up the Landing Frame */}
+        {user ? (
+          <WriteDashboard navigate={navigate} />
+        ) : (
+          <WriteLanding onJoin={() => navigate('/auth')} />
+        )}
+      </div>
     </div>
   );
 };
