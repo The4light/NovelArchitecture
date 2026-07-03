@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, Trash2, ArrowUpRight, Check, Plus } from 'lucide-react';
+import { Icons } from "../Icons"
 
 /**
  * High-Fidelity World-Building Codex Matrix & Scratchpad Panel

@@ -1,6 +1,5 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
-
+import { Icon } from "../Icons"
 /**
  * High-Fidelity Chapters & Narrative Blueprint Tree Sidebar
  */
