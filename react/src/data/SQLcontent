@@ -1,0 +1,116 @@
+Create Novel content :
+
+CREATE TABLE public.novels (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT,
+    synopsis TEXT,
+    genre TEXT NOT NULL DEFAULT 'Fantasy',
+    is_mature BOOLEAN DEFAULT FALSE NOT NULL,
+    status TEXT NOT NULL DEFAULT 'Draft',
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE
+);
+
+ALTER TABLE public.novels ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow public read access to published novels" 
+ON public.novels FOR SELECT USING (status = 'Published' OR auth.uid() = user_id);
+
+CREATE POLICY "Allow users to create their own novels" 
+ON public.novels FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Allow users to update their own novels" 
+ON public.novels FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Allow users to delete their own novels" 
+ON public.novels FOR DELETE USING (auth.uid() = user_id);
+
+
+Create chapters content :
+-- Create the Chapters table linked to Novels
+CREATE TABLE public.chapters (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    novel_id BIGINT NOT NULL REFERENCES public.novels(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    content TEXT DEFAULT '',
+    chapter_order INT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'Draft' -- Allows saving chapter drafts before publishing the book
+);
+
+-- Enable RLS
+ALTER TABLE public.chapters ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies for Chapters
+CREATE POLICY "Allow public read to published chapters" 
+ON public.chapters FOR SELECT 
+USING (
+  EXISTS (
+    SELECT 1 FROM public.novels 
+    WHERE novels.id = chapters.novel_id AND (novels.status = 'Published' OR novels.user_id = auth.uid())
+  )
+);
+
+CREATE POLICY "Allow authors to manage chapters" 
+ON public.chapters FOR ALL 
+USING (
+  EXISTS (
+    SELECT 1 FROM public.novels 
+    WHERE novels.id = chapters.novel_id AND novels.user_id = auth.uid()
+  )
+);
+
+
+codex_entries content : 
+-- 1. Create the foundational Codex & Stickies table from scratch
+CREATE TABLE public.codex_entries (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    novel_id BIGINT NOT NULL REFERENCES public.novels(id) ON DELETE CASCADE,
+    title TEXT NOT NULL DEFAULT 'Untitled Node',
+    category TEXT NOT NULL DEFAULT 'Scratchpad', -- 'Character', 'Lore', or 'Scratchpad'
+    summary TEXT DEFAULT '',
+    content TEXT DEFAULT '',
+    
+    -- Windows Sticky Floating Position Attributes
+    is_floating BOOLEAN DEFAULT FALSE,
+    position_x INT DEFAULT 150,
+    position_y INT DEFAULT 150,
+    bg_color TEXT DEFAULT '#fef08a' -- Classic Windows Yellow
+);
+
+-- 2. Enable Row Level Security
+ALTER TABLE public.codex_entries ENABLE ROW LEVEL SECURITY;
+
+-- 3. RLS Security Policies (Ensures only the project owner can manage entries)
+CREATE POLICY "Allow authors to manage codex entries" 
+ON public.codex_entries FOR ALL 
+USING (
+  EXISTS (
+    SELECT 1 FROM public.novels 
+    WHERE novels.id = codex_entries.novel_id AND novels.user_id = auth.uid()
+  )
+);
+
+CREATE POLICY "Allow public read to published novel codex entries" 
+ON public.codex_entries FOR SELECT 
+USING (
+  EXISTS (
+    SELECT 1 FROM public.novels 
+    WHERE novels.id = codex_entries.novel_id AND (novels.status = 'Published' OR novels.user_id = auth.uid())
+  )
+);
+
+add_publishing_to_index content : 
+-- Alter your existing table to support publishing states and thumbnails safely
+ALTER TABLE public.codex_entries 
+ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'Draft',
+ADD COLUMN IF NOT EXISTS thumbnail_url TEXT,
+ADD COLUMN IF NOT EXISTS author_name TEXT DEFAULT 'Anonymous';
+
+-- Double-check that read access policy remains universally open for public feeds
+CREATE POLICY "Allow public read access to entries" 
+ON public.codex_entries 
+FOR SELECT 
+USING (true);

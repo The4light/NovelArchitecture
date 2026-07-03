@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState, useContext } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
+import { supabase } from '../lib/supabaseClient';
 
 const Icons = {
   Book: () => (
@@ -32,8 +34,18 @@ const Icons = {
 const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Tap directly into the core auth state layer
+  const { user } = useContext(AuthContext);
 
   const isActive = (path) => location.pathname === path;
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setMobileMenuOpen(false);
+    navigate('/'); // Route home cleanly on click
+  };
 
   const navLinks = [
     { name: 'Home', path: '/' },
@@ -74,18 +86,29 @@ const Navbar = () => {
             <button className="p-2 hover:bg-gray-50 rounded-lg text-gray-500 transition-colors">
               <Icons.Tag />
             </button>
-            <Link
-            to="/profile" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <button className="p-2 hover:bg-gray-50 rounded-lg text-gray-500 transition-colors">
-                  <Icons.User />
-                </button>
-            </Link>
-           
+            
             <Link 
-            to = "/auth"
-             className="ml-2 bg-black text-white px-5 py-2 rounded-lg text-sm font-bold hover:bg-gray-800 transition-all active:scale-95">
-              Login/Signup
+              to="/profile" 
+              className="p-2 hover:bg-gray-50 rounded-lg text-gray-500 transition-colors flex items-center justify-center"
+            >
+              <Icons.User />
             </Link>
+            
+            {user ? (
+              <button 
+                onClick={handleLogout}
+                className="ml-2 border border-gray-200 text-gray-700 px-5 py-2 rounded-lg text-sm font-bold hover:bg-gray-50 hover:text-black transition-all active:scale-95"
+              >
+                Logout
+              </button>
+            ) : (
+              <Link 
+                to="/auth"
+                className="ml-2 bg-black text-white px-5 py-2 rounded-lg text-sm font-bold hover:bg-gray-800 transition-all active:scale-95"
+              >
+                Login/Signup
+              </Link>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -113,6 +136,25 @@ const Navbar = () => {
                   {link.name}
                 </Link>
               ))}
+              
+              <div className="h-px bg-gray-100 my-2"></div>
+              
+              {user ? (
+                <button
+                  onClick={handleLogout}
+                  className="text-left text-sm font-bold text-red-600 hover:text-red-700"
+                >
+                  Logout
+                </button>
+              ) : (
+                <Link
+                  to="/auth"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-sm font-bold text-black"
+                >
+                  Login/Signup
+                </Link>
+              )}
             </nav>
           </div>
         )}
