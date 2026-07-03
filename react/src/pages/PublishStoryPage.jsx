@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabaseClient';
 import { AuthContext } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 import ImageUpload from '../components/ImageUpload';
-import { FileText, Globe, Check } from 'lucide-react';
+import Icons from '../components/Icons'
 
 const PublishStoryPage = () => {
   const { user } = useContext(AuthContext);
