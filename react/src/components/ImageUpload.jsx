@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UploadCloud, Loader2, Image as ImageIcon } from 'lucide-react';
+import { Icons } from './Icons'
 
 const ImageUpload = ({ onUploadSuccess, currentImageUrl }) => {
   const [loading, setLoading] = useState(false);
