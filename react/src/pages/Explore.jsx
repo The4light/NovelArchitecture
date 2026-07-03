@@ -62,7 +62,7 @@ const ExplorePage = () => {
   return (
     <>
       <Navbar />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 selection:bg-purple-600 selection:text-white antialiased bg-white min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 pt-24 sm:pt-28 pb-20 selection:bg-purple-600 selection:text-white antialiased bg-white min-h-screen">
         
         {/* Typographic Hero Deck Header */}
         <div className="mb-12 space-y-2">

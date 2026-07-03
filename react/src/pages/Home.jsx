@@ -58,8 +58,7 @@ const FeaturedSection = ({ novel }) => {
   const coverImg = novel.thumbnail_url || "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=1000";
 
   return (
-    <div className="relative min-h-[85vh] flex items-center bg-gray-950 overflow-hidden py-20 px-4 sm:px-6 lg:px-8 border-b border-gray-900">
-      
+   <div className="relative min-h-[85vh] flex items-center bg-gray-950 overflow-hidden pt-24 sm:pt-28 pb-20 px-4 sm:px-6 lg:px-8 border-b border-gray-900">      
       {/* Dynamic Mesh Backdrop Blur */}
       <div className="absolute inset-0 pointer-events-none opacity-30 group-hover:opacity-40 transition-opacity duration-1000">
         <div 
