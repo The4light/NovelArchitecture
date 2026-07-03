@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon } from "../Icons"
+import { Icons } from "../Icons"
 /**
  * High-Fidelity Chapters & Narrative Blueprint Tree Sidebar
  */
