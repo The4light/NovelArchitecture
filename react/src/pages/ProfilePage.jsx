@@ -19,7 +19,7 @@ const ProfilePage = () => {
       <Navbar />
 
       {/* Profile Header */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 pt-24 sm:pt-28 pb:20">
         <div className="flex flex-col md:flex-row items-center gap-10">
           {/* Avatar with Shadow */}
           <div className="relative shrink-0">
