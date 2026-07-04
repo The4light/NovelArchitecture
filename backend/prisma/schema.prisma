@@ -6,7 +6,6 @@ datasource db {
   provider = "postgresql"
 }
 
-// FIX: Models should be PascalCase (User, not user) for best practice
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
@@ -20,15 +19,12 @@ model User {
 model Novel {
   id          String    @id @default(uuid())
   title       String
-  // FIX: It must be @db.Text (Capital 'T')
   description String    @db.Text
-  // FIX: Watch for typos (CoverUrl, not CovetrUrl)
   coverUrl    String?
   genre       String
   createdAt   DateTime  @default(now())
 
   authorId    String
-  // FIX: Added missing colon after 'references' -> references: [id]
   author      User      @relation(fields: [authorId], references: [id])
 
   chapters    Chapter[]
@@ -37,9 +33,8 @@ model Novel {
 model Chapter {
   id        String   @id @default(uuid())
   title     String
-  // FIX: Capital 'T' in @db.Text
   content   String   @db.Text
-  order     Int
+  order     Intc
   createdAt DateTime @default(now())
 
   novelId   String
