@@ -69,7 +69,8 @@ const ReadPage = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      <Navbar />
+
+      {!isReading && <Navbar />}
 
       {!isReading ? (
         /* --- ELEGANT BOOK LANDING STATE --- */
