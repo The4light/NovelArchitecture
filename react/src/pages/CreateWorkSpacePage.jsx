@@ -14,9 +14,12 @@ const CreationWorkspacePage = () => {
   const { user, loading } = useContext(AuthContext);
 
   // Layout Controls
-  const [menuOpen, setMenuOpen] = useState(true); // Default open on PC
+  const [menuOpen, setMenuOpen] = useState(true); 
   const [activeTab, setActiveTab] = useState('chapters'); 
   const [canvasFocus, setCanvasFocus] = useState('chapter'); 
+
+  // Dynamic Fallback Matrix: Quick Navigation Hub State
+  const [showQuickJumper, setShowQuickJumper] = useState(false);
 
   // Global Novel states
   const [novel, setNovel] = useState(null);
@@ -50,13 +53,31 @@ const CreationWorkspacePage = () => {
     else if (user) fetchWorkspaceData();
   }, [id, user, loading]);
 
-  // Adjust menu layout balance on resize automatically
+  // ⚡ HARDENED MOBILE UX LOCK: Intercept background scroll leaks when sidebar layer is active
+  useEffect(() => {
+    if (window.innerWidth < 768 && menuOpen) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    };
+  }, [menuOpen]);
+
+  // Adjust menu layout balance on resize automatically with smooth calibration
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 768) {
-        setMenuOpen(true); // Keep locked open on desktop panels
+        setMenuOpen(true); 
       } else {
-        setMenuOpen(false); // Close by default on tight phone layers
+        setMenuOpen(false); 
       }
     };
     handleResize();
@@ -177,8 +198,8 @@ const CreationWorkspacePage = () => {
       summary: 'Quick floating thought context',
       content: '',
       is_floating: true,
-      position_x: 180 + Math.floor(Math.random() * 100),
-      position_y: 120 + Math.floor(Math.random() * 100),
+      position_x: 60 + Math.floor(Math.random() * 80),
+      position_y: 120 + Math.floor(Math.random() * 80),
       bg_color: '#fef08a'
     };
 
@@ -239,21 +260,36 @@ const CreationWorkspacePage = () => {
     }
   };
 
-  if (pageLoading) return <div className="min-h-screen flex items-center justify-center bg-white text-xs font-black tracking-widest text-gray-400">SYNCING WORKSPACE STREAM...</div>;
+  if (pageLoading) return <div className="min-h-screen flex items-center justify-center bg-white text-xs font-black tracking-widest text-purple-600 animate-pulse">SYNCING WORKSPACE STREAM...</div>;
 
   return (
-    <div className="min-h-screen bg-white flex flex-col h-screen overflow-hidden relative select-none text-black">
+    /* ⚡ CONNECTED VIEWPORT: Lock entire screen to prevent structural page scrolling on mobile */
+    <div className="fixed inset-0 bg-white flex flex-col overflow-hidden select-none text-black selection:bg-purple-100">
       
-      {/* ─── FLOATING PREMIUM HEADER NAVBAR LAYER ─── */}
-      <header className="h-16 border-b border-gray-100 px-6 flex items-center justify-between bg-white/90 backdrop-blur-md z-50 sticky top-0 implementation-header shadow-xs">
-        <div className="flex items-center gap-5">
-          {/* Animated Interactive Hamburger */}
+      {/* Premium iOS Deceleration Easing Matrix */}
+      <style>{`
+        .custom-ease-panel {
+          transition: transform 450ms cubic-bezier(0.16, 1, 0.3, 1), width 450ms cubic-bezier(0.16, 1, 0.3, 1), opacity 400ms cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .ios-scroll-container {
+          -webkit-overflow-scrolling: touch;
+          scroll-behavior: smooth;
+        }
+        .ios-scroll-container::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
+
+      {/* ─── FLOATING PREMIUM HEADER NAVBAR LAYER (Connected into full framework grid) ─── */}
+      <header className="h-16 border-b border-gray-100 px-4 md:px-6 flex items-center justify-between bg-white/95 backdrop-blur-md z-50 shrink-0 shadow-xs select-none">
+        <div className="flex items-center gap-4">
+          {/* Animated Interactive Hamburger with color flare */}
           <button 
             onClick={() => setMenuOpen(!menuOpen)}
-            className="p-2.5 -ml-2 hover:bg-gray-100 rounded-xl transition-all active:scale-95 flex items-center justify-center border border-gray-100 bg-white shadow-xs"
+            className="p-2.5 hover:bg-purple-50 hover:text-purple-600 rounded-xl transition-all duration-300 active:scale-90 flex items-center justify-center border border-gray-100 bg-white"
           >
             <svg 
-              className={`w-4 h-4 text-black transition-transform duration-300 ease-out transform ${menuOpen ? 'rotate-90' : 'rotate-0'}`} 
+              className={`w-4 h-4 transition-transform duration-500 transform ${menuOpen ? 'rotate-90 text-purple-600' : 'rotate-0 text-black'}`} 
               fill="none" 
               stroke="currentColor" 
               strokeWidth="3" 
@@ -268,14 +304,62 @@ const CreationWorkspacePage = () => {
           </button>
 
           {/* Elevated High-Presence Story Mark */}
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-base md:text-lg font-black tracking-tight text-black capitalize">{globalTitle || "Untitled Story"}</h1>
-            <span className="text-[9px] font-black uppercase tracking-widest bg-black text-white px-2 py-0.5 rounded-md">{globalGenre}</span>
+          <div className="flex items-center gap-2">
+            <h1 className="text-sm md:text-base font-black tracking-tight text-gray-900 max-w-[140px] md:max-w-none truncate capitalize">{globalTitle || "Untitled Story"}</h1>
+            <span className="text-[8px] font-black uppercase tracking-widest bg-purple-600 text-white px-2 py-0.5 rounded-sm">{globalGenre}</span>
           </div>
         </div>
 
-        {saving && <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 animate-pulse">Autosaving...</span>}
+        <div className="flex items-center gap-3">
+          {/* ⚡ PREMIUM FALLBACK NAVIGATION MODULE: Omni Quick-Jumper Pill */}
+          <button
+            onClick={() => setShowQuickJumper(!showQuickJumper)}
+            className="px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-[9px] font-black uppercase tracking-wider hover:bg-amber-600 hover:text-white transition-all duration-300 active:scale-95 flex items-center gap-1 shadow-xs"
+          >
+            <span>Nav Jumper</span>
+            <svg className={`w-2.5 h-2.5 transition-transform duration-300 ${showQuickJumper ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+            </svg>
+          </button>
+
+          {saving && (
+            <div className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 bg-purple-600 rounded-full animate-ping" />
+              <span className="text-[9px] font-black uppercase tracking-widest text-purple-600 hidden sm:inline-block">Syncing...</span>
+            </div>
+          )}
+        </div>
       </header>
+
+      {/* ─── NAV JUMPER OVERLAY VIEWPORT (Viewport Scroll Bug Protection) ─── */}
+      {showQuickJumper && (
+        <div className="absolute top-16 left-0 right-0 max-h-60 bg-white border-b border-gray-200 shadow-xl z-50 overflow-y-auto p-4 ios-scroll-container animate-in slide-in-from-top-3 duration-300 ease-out">
+          <div className="text-[9px] font-black uppercase tracking-wider text-gray-400 font-mono mb-2">Instant Jumper Node Stream</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pb-6">
+            <button
+              onClick={() => { setCanvasFocus('novel'); setShowQuickJumper(false); }}
+              className="p-2.5 text-left text-xs font-bold rounded-xl border border-amber-200 bg-amber-50/40 text-amber-900 hover:bg-amber-100 transition-colors flex items-center justify-between"
+            >
+              <span>📖 Global Settings (Synopsis & Meta)</span>
+              <span className="text-[9px] uppercase font-mono bg-amber-200 text-amber-800 px-1.5 rounded">Meta</span>
+            </button>
+            {chapters.map((chap, idx) => (
+              <button
+                key={chap.id}
+                onClick={() => { selectChapter(chap); setShowQuickJumper(false); }}
+                className={`p-2.5 text-left text-xs font-bold rounded-xl border transition-all ${
+                  activeChapter?.id === chap.id 
+                    ? 'border-purple-600 bg-purple-50 text-purple-900 ring-1 ring-purple-500' 
+                    : 'border-gray-100 bg-gray-50 text-gray-800 hover:bg-gray-100'
+                }`}
+              >
+                <div className="truncate font-black">{chap.title}</div>
+                <div className="text-[9px] text-gray-400 font-normal">Sequence Node Matrix #{idx + 1}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Floating Notes Engine Layer */}
       {codexEntries.filter(e => e.is_floating).map((note) => (
@@ -289,39 +373,43 @@ const CreationWorkspacePage = () => {
       ))}
 
       {/* ─── VIEW WORKSPACE FRAME ASSEMBLY ─── */}
-      <div className="flex flex-1 h-[calc(100vh-4rem)] overflow-hidden relative bg-white">
+      <div className="flex flex-1 h-[calc(100dvh-4rem)] overflow-hidden relative bg-white">
         
-        {/* ─── UNIFIED SIDEBAR (Dynamic Width Allocation) ─── */}
+        {/* ─── UNIFIED SIDEBAR FRAME (Harden dynamic heights for tiny screens) ─── */}
         <aside className={`
-          fixed md:static inset-y-16 left-0 bg-white border-r border-gray-200 z-40 flex flex-col transition-all duration-300 ease-in-out h-full overflow-hidden
-          ${menuOpen ? 'w-96 translate-x-0 shadow-2xl md:shadow-none' : 'w-0 -translate-x-full md:translate-x-0 md:w-0 md:border-none'}
+          fixed md:static inset-y-0 left-0 bg-white border-r border-gray-100 z-40 flex flex-col custom-ease-panel h-full overflow-hidden
+          ${menuOpen ? 'w-full sm:w-80 md:w-96 translate-x-0 shadow-2xl md:shadow-none' : 'w-0 -translate-x-full md:translate-x-0 md:w-0 md:border-none'}
         `}>
           
-          {/* Minimal Tab Switch Assembly */}
-          <div className="p-4 border-b border-gray-100 flex gap-2 bg-white">
+          {/* Layout Tab Bar Switch Matrix */}
+          <div className="p-4 border-b border-gray-100 flex gap-2 bg-gray-50/40 shrink-0">
             <button
               onClick={() => setActiveTab('chapters')}
-              className={`flex-1 text-center py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${
-                activeTab === 'chapters' ? 'bg-black text-white shadow-xs' : 'bg-gray-50 text-gray-400 hover:text-black'
+              className={`flex-1 text-center py-2.5 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${
+                activeTab === 'chapters' 
+                  ? 'bg-black text-white shadow-xs ring-1 ring-black' 
+                  : 'bg-white border border-gray-100 text-gray-400 hover:text-black hover:border-gray-300'
               }`}
             >
-              Chapters
+              Manuscript
             </button>
             <button
               onClick={() => setActiveTab('notes')}
-              className={`flex-1 text-center py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${
-                activeTab === 'notes' ? 'bg-black text-white shadow-xs' : 'bg-gray-50 text-gray-400 hover:text-black'
+              className={`flex-1 text-center py-2.5 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${
+                activeTab === 'notes' 
+                  ? 'bg-purple-600 text-white shadow-xs ring-1 ring-purple-400' 
+                  : 'bg-white border border-gray-100 text-gray-400 hover:text-purple-600 hover:border-gray-200'
               }`}
             >
-              Notes & Codex
+              World Codex
             </button>
           </div>
 
-          {/* Dynamic Core Panel Window */}
-          <div className="flex-1 overflow-y-auto h-full min-h-0">
+          {/* ⚡ HARDENED SCROLL WRAPPER WINDOW: Added bottom safety padding buffers to force bottom elements above hardware docks */}
+          <div className="flex-1 overflow-y-auto h-full min-h-0 pb-36 ios-scroll-container">
             {activeTab === 'chapters' ? (
               <ManuscriptSidebar
-                isOpen={true}
+                isOpen={false} 
                 setIsOpen={() => {}} 
                 novel={novel}
                 chapters={chapters}
@@ -334,7 +422,7 @@ const CreationWorkspacePage = () => {
               />
             ) : (
               <CodexSidebar
-                isOpen={true}
+                isOpen={false} 
                 setIsOpen={() => {}} 
                 activeTab={activeCodexTab}
                 setActiveTab={setActiveCodexTab}
@@ -359,18 +447,18 @@ const CreationWorkspacePage = () => {
           </div>
         </aside>
 
-        {/* Mobile Sidebar Close Backdrop Filter Overlay */}
+        {/* Mobile Backdrop Close Filter Overlay with cinematic ease fade */}
         {menuOpen && (
           <div 
             onClick={() => setMenuOpen(false)}
-            className="fixed inset-0 bg-black/5 backdrop-blur-xs z-30 md:hidden transition-opacity" 
+            className="fixed inset-0 bg-black/10 backdrop-blur-xs z-30 md:hidden transition-opacity duration-500" 
           />
         )}
 
-        {/* ─── MAIN PROSE SHEET EDITOR CONTAINER ─── */}
-        <main className="flex-1 bg-white flex flex-col overflow-y-auto px-6 py-8 md:p-12 lg:p-16 transition-all h-full">
+        {/* ─── MAIN PROSE SHEET EDITOR WORKSPACE CONTAINER ─── */}
+        <main className="flex-1 bg-white flex flex-col overflow-y-auto px-4 py-6 md:p-12 lg:p-16 h-full custom-ease-panel ios-scroll-container">
           {canvasFocus === 'novel' ? (
-            <div className="max-w-2xl w-full mx-auto flex flex-col flex-1 space-y-8 animate-in fade-in duration-200">
+            <div className="max-w-2xl w-full mx-auto flex flex-col flex-1 space-y-8 animate-in fade-in zoom-in-95 duration-300 pb-24">
               <PublishControls 
                 mode="novel"
                 status={globalStatus}
@@ -378,37 +466,37 @@ const CreationWorkspacePage = () => {
                 onPublish={() => handleUpdateGlobalNovel('Published')}
               />
 
-              <div className="space-y-6">
+              <div className="space-y-5">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-wider text-gray-400">Story Title</label>
+                  <label className="text-[9px] font-black uppercase tracking-wider text-amber-500 font-mono">Story Title</label>
                   <input 
                     type="text"
                     value={globalTitle}
                     onChange={(e) => setGlobalTitle(e.target.value)}
-                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 font-bold text-sm focus:outline-black bg-white text-black"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-amber-400 font-bold text-xs bg-white text-black focus:outline-none transition-all duration-300"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-wider text-gray-400">Genre Category</label>
+                  <label className="text-[9px] font-black uppercase tracking-wider text-amber-500 font-mono">Genre Category</label>
                   <input 
                     type="text"
                     value={globalGenre}
                     onChange={(e) => setGlobalGenre(e.target.value)}
-                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 font-bold text-sm focus:outline-black bg-white text-black"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-amber-400 font-bold text-xs bg-white text-black focus:outline-none transition-all duration-300"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-wider text-gray-400">Story Description</label>
+                  <label className="text-[9px] font-black uppercase tracking-wider text-gray-400 font-mono">Story Description</label>
                   <textarea 
                     value={globalSummary}
                     onChange={(e) => setGlobalSummary(e.target.value)}
-                    className="w-full h-40 px-4 py-3.5 rounded-xl border border-gray-200 font-medium text-sm focus:outline-black resize-none leading-relaxed bg-white text-black"
+                    className="w-full h-40 px-4 py-3 rounded-xl border border-gray-200 focus:border-black font-medium text-xs bg-white text-black focus:outline-none resize-none leading-relaxed transition-all duration-300"
                   />
                 </div>
               </div>
             </div>
           ) : activeChapter ? (
-            <div className="max-w-2xl w-full mx-auto flex flex-col flex-1 space-y-6 animate-in fade-in duration-200">
+            <div className="max-w-2xl w-full mx-auto flex flex-col flex-1 space-y-6 animate-in fade-in slide-in-from-bottom-3 duration-400 ease-out pb-24">
               <PublishControls 
                 mode="chapter"
                 status={activeChapter?.status}
@@ -422,12 +510,15 @@ const CreationWorkspacePage = () => {
                 value={chapterContent}
                 onChange={(e) => setChapterContent(e.target.value)}
                 placeholder="Start typing your chapter story text here..."
-                className="w-full flex-1 bg-transparent text-gray-900 leading-relaxed font-medium text-base placeholder:text-gray-300 resize-none focus:outline-none min-h-[350px]"
+                className="w-full flex-1 bg-transparent text-gray-900 leading-relaxed font-medium text-sm md:text-base placeholder:text-gray-300 resize-none focus:outline-none min-h-[350px] border-l border-transparent focus:border-purple-600/10 pl-2 transition-all duration-300"
               />
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center h-full">
-              <button onClick={handleCreateChapter} className="bg-black text-white px-6 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest active:scale-95 transition-transform">
+            <div className="flex flex-col items-center justify-center h-full animate-in fade-in duration-500">
+              <button 
+                onClick={handleCreateChapter} 
+                className="bg-purple-600 text-white hover:bg-black px-6 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest active:scale-95 transition-all duration-300 shadow-md shadow-purple-600/10"
+              >
                 Create Your First Chapter
               </button>
             </div>
