@@ -407,7 +407,7 @@ return (
           </div>
 
           {/* Core Content Views with safety scroll pads */}
-          <div className="flex-1 overflow-y-auto h-full min-h-0 pb-36 ios-scroll-container">
+          <div className="flex-1 overflow-y-auto h-full min-h-0 pb-10 ios-scroll-container">
             {activeTab === 'chapters' ? (
               <ManuscriptSidebar
                 isOpen={false} 
