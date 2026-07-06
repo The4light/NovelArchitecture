@@ -262,11 +262,10 @@ const CreationWorkspacePage = () => {
 
   if (pageLoading) return <div className="min-h-screen flex items-center justify-center bg-white text-xs font-black tracking-widest text-purple-600 animate-pulse">SYNCING WORKSPACE STREAM...</div>;
 
-  return (
-    /* ⚡ CONNECTED VIEWPORT: Lock entire screen to prevent structural page scrolling on mobile */
+return (
     <div className="fixed inset-0 bg-white flex flex-col overflow-hidden select-none text-black selection:bg-purple-100">
       
-      {/* Premium iOS Deceleration Easing Matrix */}
+      {/* Premium iOS Motion Interaction Buffers */}
       <style>{`
         .custom-ease-panel {
           transition: transform 450ms cubic-bezier(0.16, 1, 0.3, 1), width 450ms cubic-bezier(0.16, 1, 0.3, 1), opacity 400ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -280,10 +279,10 @@ const CreationWorkspacePage = () => {
         }
       `}</style>
 
-      {/* ─── FLOATING PREMIUM HEADER NAVBAR LAYER (Connected into full framework grid) ─── */}
-      <header className="h-16 border-b border-gray-100 px-4 md:px-6 flex items-center justify-between bg-white/95 backdrop-blur-md z-50 shrink-0 shadow-xs select-none">
+      {/* ─── FIXED HEADER NAVBAR LAYOUT ─── */}
+      <header className="h-16 border-b border-gray-100 px-4 md:px-6 flex items-center justify-between bg-white z-50 shrink-0 shadow-xs select-none">
         <div className="flex items-center gap-4">
-          {/* Animated Interactive Hamburger with color flare */}
+          {/* Animated Hamburger Trigger */}
           <button 
             onClick={() => setMenuOpen(!menuOpen)}
             className="p-2.5 hover:bg-purple-50 hover:text-purple-600 rounded-xl transition-all duration-300 active:scale-90 flex items-center justify-center border border-gray-100 bg-white"
@@ -303,7 +302,7 @@ const CreationWorkspacePage = () => {
             </svg>
           </button>
 
-          {/* Elevated High-Presence Story Mark */}
+          {/* Elevated Story Mark */}
           <div className="flex items-center gap-2">
             <h1 className="text-sm md:text-base font-black tracking-tight text-gray-900 max-w-[140px] md:max-w-none truncate capitalize">{globalTitle || "Untitled Story"}</h1>
             <span className="text-[8px] font-black uppercase tracking-widest bg-purple-600 text-white px-2 py-0.5 rounded-sm">{globalGenre}</span>
@@ -311,7 +310,7 @@ const CreationWorkspacePage = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* ⚡ PREMIUM FALLBACK NAVIGATION MODULE: Omni Quick-Jumper Pill */}
+          {/* Clean Top Nav-Jumper Option */}
           <button
             onClick={() => setShowQuickJumper(!showQuickJumper)}
             className="px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-[9px] font-black uppercase tracking-wider hover:bg-amber-600 hover:text-white transition-all duration-300 active:scale-95 flex items-center gap-1 shadow-xs"
@@ -331,7 +330,7 @@ const CreationWorkspacePage = () => {
         </div>
       </header>
 
-      {/* ─── NAV JUMPER OVERLAY VIEWPORT (Viewport Scroll Bug Protection) ─── */}
+      {/* Jumper Quick Dropdown Selector Map */}
       {showQuickJumper && (
         <div className="absolute top-16 left-0 right-0 max-h-60 bg-white border-b border-gray-200 shadow-xl z-50 overflow-y-auto p-4 ios-scroll-container animate-in slide-in-from-top-3 duration-300 ease-out">
           <div className="text-[9px] font-black uppercase tracking-wider text-gray-400 font-mono mb-2">Instant Jumper Node Stream</div>
@@ -372,23 +371,25 @@ const CreationWorkspacePage = () => {
         />
       ))}
 
-      {/* ─── VIEW WORKSPACE FRAME ASSEMBLY ─── */}
+      {/* ─── MAIN WORKSPACE FRAME ASSEMBLY ─── */}
       <div className="flex flex-1 h-[calc(100dvh-4rem)] overflow-hidden relative bg-white">
         
-        {/* ─── UNIFIED SIDEBAR FRAME (Harden dynamic heights for tiny screens) ─── */}
+        {/* ⚡ SNIPPET CHANGER: FIXED THE GHOST SPACE & REDUCED TOP BLOCKING
+          Anchoring 'top-16 bottom-0' matches the header navbar precisely without overlay offsets.
+        */}
         <aside className={`
-          fixed md:static inset-y-0 left-0 bg-white border-r border-gray-100 z-40 flex flex-col custom-ease-panel h-full overflow-hidden
+          fixed md:static top-16 bottom-0 left-0 bg-white border-r border-gray-100 z-40 flex flex-col custom-ease-panel h-[calc(100dvh-4rem)] overflow-hidden
           ${menuOpen ? 'w-full sm:w-80 md:w-96 translate-x-0 shadow-2xl md:shadow-none' : 'w-0 -translate-x-full md:translate-x-0 md:w-0 md:border-none'}
         `}>
           
-          {/* Layout Tab Bar Switch Matrix */}
+          {/* original layout design tab bar choice structure */}
           <div className="p-4 border-b border-gray-100 flex gap-2 bg-gray-50/40 shrink-0">
             <button
               onClick={() => setActiveTab('chapters')}
               className={`flex-1 text-center py-2.5 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${
                 activeTab === 'chapters' 
-                  ? 'bg-black text-white shadow-xs ring-1 ring-black' 
-                  : 'bg-white border border-gray-100 text-gray-400 hover:text-black hover:border-gray-300'
+                  ? 'bg-black text-white shadow-xs' 
+                  : 'bg-white border border-gray-100 text-gray-400 hover:text-black'
               }`}
             >
               Manuscript
@@ -397,15 +398,15 @@ const CreationWorkspacePage = () => {
               onClick={() => setActiveTab('notes')}
               className={`flex-1 text-center py-2.5 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${
                 activeTab === 'notes' 
-                  ? 'bg-purple-600 text-white shadow-xs ring-1 ring-purple-400' 
-                  : 'bg-white border border-gray-100 text-gray-400 hover:text-purple-600 hover:border-gray-200'
+                  ? 'bg-purple-600 text-white shadow-xs' 
+                  : 'bg-white border border-gray-100 text-gray-400 hover:text-purple-600'
               }`}
             >
               World Codex
             </button>
           </div>
 
-          {/* ⚡ HARDENED SCROLL WRAPPER WINDOW: Added bottom safety padding buffers to force bottom elements above hardware docks */}
+          {/* Core Content Views with safety scroll pads */}
           <div className="flex-1 overflow-y-auto h-full min-h-0 pb-36 ios-scroll-container">
             {activeTab === 'chapters' ? (
               <ManuscriptSidebar
@@ -447,7 +448,7 @@ const CreationWorkspacePage = () => {
           </div>
         </aside>
 
-        {/* Mobile Backdrop Close Filter Overlay with cinematic ease fade */}
+        {/* Mobile Backdrop Overlay Filter */}
         {menuOpen && (
           <div 
             onClick={() => setMenuOpen(false)}
@@ -455,8 +456,8 @@ const CreationWorkspacePage = () => {
           />
         )}
 
-        {/* ─── MAIN PROSE SHEET EDITOR WORKSPACE CONTAINER ─── */}
-        <main className="flex-1 bg-white flex flex-col overflow-y-auto px-4 py-6 md:p-12 lg:p-16 h-full custom-ease-panel ios-scroll-container">
+        {/* PROSE EDITOR CONTENT SHEET */}
+        <main className="flex-1 bg-white flex flex-col overflow-y-auto px-4 py-6 md:p-12 lg:p-16 h-full ios-scroll-container">
           {canvasFocus === 'novel' ? (
             <div className="max-w-2xl w-full mx-auto flex flex-col flex-1 space-y-8 animate-in fade-in zoom-in-95 duration-300 pb-24">
               <PublishControls 
