@@ -71,16 +71,33 @@ const CreationWorkspacePage = () => {
     };
   }, [menuOpen]);
 
-  // Adjust menu layout balance on resize automatically with smooth calibration
+// Adjust menu layout balance on resize, blocking virtual keyboard height mutations
   useEffect(() => {
+    // Cache the structural starting width to isolate horizontal variations
+    let lastWidth = window.innerWidth;
+
     const handleResize = () => {
-      if (window.innerWidth >= 768) {
+      const currentWidth = window.innerWidth;
+      
+      // If horizontal viewport width hasn't mutated, break execution (blocks mobile keyboards)
+      if (currentWidth === lastWidth) return;
+      
+      lastWidth = currentWidth;
+
+      if (currentWidth >= 768) {
         setMenuOpen(true); 
       } else {
         setMenuOpen(false); 
       }
     };
-    handleResize();
+
+    // Initialize layout setup cleanly on component mount
+    if (window.innerWidth < 768) {
+      setMenuOpen(false);
+    } else {
+      setMenuOpen(true);
+    }
+
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
