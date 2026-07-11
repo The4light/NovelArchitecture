@@ -114,3 +114,73 @@
   ON public.codex_entries 
   FOR SELECT 
   USING (true);
+
+  public.profiles
+  -- 1. Create the Public Profiles Table
+CREATE TABLE public.profiles (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    username TEXT UNIQUE NOT NULL,
+    display_name TEXT NOT NULL,
+    avatar_url TEXT,
+    bio TEXT,
+    banner_url TEXT,
+    
+    CONSTRAINT username_length_check CHECK (char_length(username) >= 3)
+);
+
+-- 2. Enable Row Level Security (RLS)
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+-- 3. Setup RLS Policies for Profiles
+CREATE POLICY "Allow public read access to all profiles" 
+ON public.profiles FOR SELECT USING (true);
+
+CREATE POLICY "Allow individual users to update their own profile" 
+ON public.profiles FOR UPDATE USING (auth.uid() = id);
+
+Automation
+-- 1. Create the functional database listener engine
+CREATE OR REPLACE FUNCTION public.handle_new_user_signup()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, username, display_name, avatar_url, bio)
+  VALUES (
+    NEW.id,
+    -- Generates a temporary unique username using their email prefix + random numbers
+    LOWER(SPLIT_PART(NEW.email, '@', 1)) || '_' || FLOOR(RANDOM() * 1000)::TEXT,
+    -- Sets default display name to email prefix
+    SPLIT_PART(NEW.email, '@', 1),
+    -- Clean default placeholder robot avatar using their unique ID as a variant seed
+    'https://api.dicebear.com/7.x/bottts/svg?seed=' || NEW.id::TEXT,
+    'A new dynamic storyteller on the platform.'
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 2. Attach the trigger mechanism to execution lifecycle of auth.users
+CREATE OR REPLACE TRIGGER on_auth_user_created_profile
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user_signup();
+
+Novel.profile link
+-- 1. Automatically find ALL unique user_ids inside the novels table and spin up profiles for them
+INSERT INTO public.profiles (id, username, display_name, avatar_url, bio)
+SELECT DISTINCT 
+  user_id, 
+  'author_' || substr(user_id::text, 1, 8) as username,
+  'Author ' || substr(user_id::text, 1, 8) as display_name,
+  'https://api.dicebear.com/7.x/bottts/svg?seed=' || user_id::text as avatar_url,
+  'A prolific writer on the platform.' as bio
+FROM public.novels
+ON CONFLICT (id) DO NOTHING;
+
+-- 2. Drop the constraint first just in case it's lingering in a broken state
+ALTER TABLE public.novels DROP CONSTRAINT IF EXISTS fk_novels_profile;
+
+-- 3. Now apply the clean foreign key link constraint safely
+ALTER TABLE public.novels
+ADD CONSTRAINT fk_novels_profile
+FOREIGN KEY (user_id) REFERENCES public.profiles(id)
+ON DELETE CASCADE;

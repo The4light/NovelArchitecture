@@ -4,8 +4,6 @@ import React from 'react';
  * High-Fidelity Chapters & Narrative Blueprint Tree Sidebar
  */
 const ManuscriptSidebar = ({
-  isOpen,
-  setIsOpen,
   novel,
   chapters = [], 
   activeChapter,
@@ -23,12 +21,12 @@ const ManuscriptSidebar = ({
       <div className="flex-1 p-5 space-y-6 overflow-y-auto">
         
         {/* Simple Back Step Action */}
-        <button 
-          onClick={onBackToDashboard} 
-          className="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-black transition-colors flex items-center gap-1"
-        >
-          &larr; Exit to Dashboard
-        </button>
+       <button 
+        onClick={onBackToDashboard} 
+        className="text-[10px] font-black uppercase tracking-widest text-rose-600 hover:text-white hover:bg-rose-600 border border-gray-900 hover:border-rose-600 transition-all flex items-center gap-1 px-3 py-1.5 rounded-lg"
+      >
+        &larr; Exit to Dashboard
+      </button>
         
         {/* Story Configuration Meta Block */}
         <div 
