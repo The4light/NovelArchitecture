@@ -22,9 +22,11 @@ export default function App() {
         <Route path="/write" element={<WritePage />} />
         <Route path="/write/create" element={<CreateStoryPage />} /> {/* Registered configuration path */}
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/profile/:username" element={<ProfilePage />} />
         <Route path="/read/:id" element={<ReadPage />} />
         <Route path="/write/edit/:id" element={<CreationWorkspacePage />} />
         <Route path="/read" element={<ReadPage />} />
+        <Route path="/read/:id" element={<ReadPage />} />
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/library" element={<LibraryPage />} />

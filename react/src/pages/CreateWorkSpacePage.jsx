@@ -138,6 +138,7 @@ const CreationWorkspacePage = () => {
   const handleUpdateGlobalNovel = async (statusTarget) => {
     setSaving(true);
     try {
+      // 1. Update the parent Novel record meta-properties
       const { data, error } = await supabase
         .from('novels')
         .update({
@@ -151,12 +152,33 @@ const CreationWorkspacePage = () => {
         .single();
 
       if (error) throw error;
+      
       if (data) {
         setNovel(data);
         setGlobalStatus(data.status);
+        
+        // 2. CASCADING MASS PUBLISH: If mass publishing the novel, flip all chapters simultaneously
+        if (statusTarget === 'Published') {
+          const { error: chapterError } = await supabase
+            .from('chapters')
+            .update({ status: 'Published' })
+            .eq('novel_id', id);
+            
+          if (chapterError) throw chapterError;
+
+          // Sync the frontend state so all chapters instantly display as 'Published' without reloading
+          setChapters(prevChapters => 
+            prevChapters.map(c => ({ ...c, status: 'Published' }))
+          );
+          
+          // If the author currently has a chapter open on their screen, keep its UI status synced
+          if (activeChapter) {
+            setActiveChapter(prev => ({ ...prev, status: 'Published' }));
+          }
+        }
       }
     } catch (err) {
-      console.error(err.message);
+      console.error("Mass operation synchronization failure:", err.message);
     } finally {
       setSaving(false);
     }

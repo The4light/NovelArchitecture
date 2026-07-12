@@ -5,34 +5,40 @@ import { Icons } from '../components/Icons';
 import { genreColors } from '../data/novel';
 import { supabase } from '../lib/supabaseClient';
 
+const fontStack = '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif';
+
 const ReadPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   
-  // Core Data States
   const [novel, setNovel] = useState(null);
   const [chapters, setChapters] = useState([]);
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
   const [isReading, setIsReading] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Fetch target novel and its published chapters
   useEffect(() => {
     const fetchFullNarrativeData = async () => {
       try {
         setLoading(true);
         
-        // 1. Fetch novel metadata details
+        // Fetch novel metadata details alongside creator profile record via user_id relationship mapping
         const { data: novelData, error: novelErr } = await supabase
           .from('novels')
-          .select('*')
+          .select(`
+            *,
+            profiles:user_id (
+              username,
+              display_name,
+              avatar_url
+            )
+          `)
           .eq('id', id)
           .single();
 
         if (novelErr) throw novelErr;
         setNovel(novelData);
 
-        // 2. Fetch all public chapters belonging to this novel
         const { data: chapterData, error: chapErr } = await supabase
           .from('chapters')
           .select('*')
@@ -52,181 +58,178 @@ const ReadPage = () => {
     fetchFullNarrativeData();
   }, [id]);
 
-  // Scroll reset safely toggled on viewport view switches
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [id, isReading, currentChapterIndex]);
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center bg-white text-xs font-black tracking-widest text-gray-400">CONNECTING TO CATALOG MATRIX...</div>;
+    return (
+      <div className="min-h-screen bg-[#FBFBFD] flex items-center justify-center" style={{ fontFamily: fontStack }}>
+        <div className="w-6 h-6 rounded-full border-2 border-[#E5E5EA] border-t-[#4B3869] animate-spin" />
+      </div>
+    );
   }
 
   if (!novel) {
-    return <div className="min-h-screen flex items-center justify-center text-gray-500 font-bold">Manuscript dataset not found.</div>;
+    return <div className="min-h-screen flex items-center justify-center text-[#6E6E73] font-medium" style={{ fontFamily: fontStack }}>Manuscript dataset not found.</div>;
   }
 
   const activeChapter = chapters[currentChapterIndex];
+  const authorProfile = novel.profiles;
 
   return (
-    <div className="min-h-screen bg-white">
-
+    <div className="min-h-screen bg-[#FBFBFD] text-[#1D1D1F] antialiased selection:bg-[#EDE9F7]" style={{ fontFamily: fontStack }}>
       {!isReading && <Navbar />}
 
       {!isReading ? (
-        /* --- ELEGANT BOOK LANDING STATE --- */
-        <div className="animate-in fade-in slide-in-from-top-4 duration-1000">
-          <header className="relative pt-16 pb-12 overflow-hidden">
-            <div className="max-w-6xl mx-auto px-4 flex flex-col md:flex-row items-center gap-16">
+        <div className="max-w-5xl mx-auto px-6 sm:px-8 pt-28 pb-20">
+          <header className="flex flex-col md:flex-row items-center gap-12 border-b border-[#E5E5EA] pb-12">
+            
+            {/* Elegant Cover Artwork */}
+            <div className="w-48 sm:w-64 shrink-0">
+              <div className="relative aspect-[3/4] rounded-2xl overflow-hidden shadow-[0_16px_40px_rgba(0,0,0,0.06)] border border-[#E5E5EA]">
+                <img 
+                  src={novel.thumbnail_url || "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=600"} 
+                  alt={novel.title} 
+                  className="w-full h-full object-cover" 
+                />
+              </div>
+            </div>
+
+            {/* Book Info Metadata */}
+            <div className="flex-1 text-center md:text-left space-y-4">
+              <div className={`inline-flex px-2.5 py-0.5 rounded-full text-[9px] font-bold tracking-widest uppercase border ${genreColors[novel.genre] || 'bg-[#F1F1F3] text-[#6E6E73] border-[#E5E5EA]'}`}>
+                {novel.genre}
+              </div>
               
-              {/* Massive Elegant Cover */}
-              <div className="w-full md:w-[400px] shrink-0">
-                <div className="relative group">
-                  <div className="absolute -inset-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
-                  <div className="relative aspect-[2/3] rounded-2xl overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] border border-white/20">
-                    <img 
-                      src={novel.thumbnail_url || "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=1000"} 
-                      alt={novel.title} 
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
-                    />
-                  </div>
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold text-[#1D1D1F] tracking-tight capitalize leading-tight">
+                {novel.title}
+              </h1>
+              
+              {/* Connected Dynamic Profile Navigation Card */}
+              <div 
+                onClick={() => authorProfile?.username && navigate(`/profile/${authorProfile.username}`)}
+                className="inline-flex items-center justify-center md:justify-start gap-3 group cursor-pointer border border-[#E5E5EA] bg-white px-4 py-2 rounded-xl hover:border-[#1D1D1F]/20 transition-all shadow-sm"
+              >
+                <img 
+                  src={authorProfile?.avatar_url || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + novel.user_id} 
+                  className="w-7 h-7 rounded-full object-cover ring-1 ring-[#E5E5EA]" 
+                  alt="" 
+                />
+                <div className="text-left">
+                  <p className="text-[9px] font-bold text-[#6E6E73] uppercase tracking-wider leading-none">Author</p>
+                  <p className="text-xs font-semibold text-[#1D1D1F] transition-colors mt-0.5">
+                    {authorProfile?.display_name || 'Anonymous'}
+                  </p>
                 </div>
               </div>
 
-              {/* Sophisticated Meta Data */}
-              <div className="flex-1 text-center md:text-left">
-                <div className={`inline-flex px-3 py-1 rounded-full text-[10px] font-black tracking-[0.3em] uppercase mb-8 border-2 ${genreColors[novel.genre] || 'bg-purple-50 text-purple-700 border-purple-200'}`}>
-                  {novel.genre}
-                </div>
-                
-                <h1 className="text-5xl md:text-7xl font-black text-gray-900 mb-6 tracking-tighter leading-tight">
-                  {novel.title}
-                </h1>
-                
-                <div className="flex items-center justify-center md:justify-start gap-4 mb-8">
-                  <div className="w-12 h-12 rounded-full border-2 border-purple-100 p-0.5">
-                    <img src="https://i.pravatar.cc/100?u=sarah" className="w-full h-full rounded-full object-cover" alt="" />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Written By</p>
-                    <Link to="/profile" className="text-sm font-black text-gray-900 hover:text-purple-600 transition-colors uppercase">
-                      {novel.author_name || 'Author'}
-                    </Link>
-                  </div>
-                </div>
+              <p className="text-base text-[#6E6E73] leading-relaxed max-w-xl font-normal">
+                {novel.synopsis || novel.description || 'No public description committed.'}
+              </p>
 
-                <p className="text-xl text-gray-500 leading-relaxed max-w-xl mb-10 font-medium italic">
-                  "{novel.synopsis || novel.description || 'No public profile description committed by author.'}"
-                </p>
-
-                <div className="flex flex-wrap items-center justify-center md:justify-start gap-8 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">
-                  <span className="flex items-center gap-2"><Icons.Book className="w-4 h-4"/> {chapters.length} Chapters</span>
-                </div>
+              <div className="text-xs font-medium text-[#6E6E73] pt-2">
+                <span className="flex items-center justify-center md:justify-start gap-1.5">
+                  <Icons.Book className="w-4 h-4 text-[#8E8E93]"/> {chapters.length} Chapters published
+                </span>
               </div>
             </div>
           </header>
 
-          {/* PREVIEW SECTION (The Teaser) */}
-          <section className="max-w-3xl mx-auto px-4 py-20 relative">
-            <div className="text-center mb-16">
-              <h3 className="text-[11px] font-black uppercase tracking-[0.5em] text-purple-500 mb-4">Table of Contents</h3>
-              <div className="w-12 h-1 bg-black mx-auto rounded-full"></div>
-            </div>
+          {/* Table of Contents Container */}
+          <section className="max-w-2xl mx-auto py-16">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-[#6E6E73] mb-6 text-center">Table of Contents</h3>
 
             {chapters.length === 0 ? (
-              <div className="text-center text-sm font-medium text-gray-400 italic py-4">
+              <div className="text-center text-sm font-medium text-[#6E6E73] italic py-8 border border-dashed border-[#E5E5EA] rounded-2xl bg-white">
                 This author hasn't launched any chapters live yet.
               </div>
             ) : (
-              <div className="space-y-3 max-w-xl mx-auto mb-16">
+              <div className="space-y-2.5 max-w-md mx-auto mb-12">
                 {chapters.map((chap, idx) => (
                   <button
                     key={chap.id}
                     onClick={() => { setCurrentChapterIndex(idx); setIsReading(true); }}
-                    className="w-full px-5 py-4 bg-white hover:bg-gray-50 border border-gray-100 hover:border-black transition-all rounded-xl font-bold text-sm text-gray-800 flex justify-between items-center group shadow-sm"
+                    className="w-full px-5 py-3.5 bg-white border border-[#E5E5EA] hover:border-[#4B3869] text-left transition-all rounded-xl font-medium text-sm text-[#1D1D1F] flex justify-between items-center group shadow-sm"
                   >
-                    <span className="group-hover:text-purple-700 transition-colors">{chap.title}</span>
-                    <span className="text-[10px] text-gray-400 font-black tracking-wider uppercase">Read →</span>
+                    <span className="group-hover:text-[#4B3869] transition-colors">{chap.title}</span>
+                    <span className="text-[10px] text-[#6E6E73] font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity">Read →</span>
                   </button>
                 ))}
               </div>
             )}
 
-            {/* Global Start Button Control Panel */}
             {chapters.length > 0 && (
-              <div className="flex justify-center border-t border-gray-50 pt-10">
+              <div className="flex justify-center border-t border-[#E5E5EA] pt-10">
                 <button 
                   onClick={() => { setCurrentChapterIndex(0); setIsReading(true); }}
-                  className="group relative px-12 py-5 bg-black text-white rounded-2xl font-black text-sm tracking-[0.2em] shadow-2xl hover:bg-purple-700 transition-all active:scale-95 flex items-center gap-4"
+                  className="px-8 py-4 bg-[#1D1D1F] text-white rounded-full font-medium text-sm tracking-wide shadow-md hover:bg-[#4B3869] transition-colors"
                 >
-                  START READING NOW
-                  <Icons.TrendingUp className="w-4 h-4 rotate-90 group-hover:translate-x-1 transition-transform" />
+                  Start Reading Now
                 </button>
               </div>
             )}
           </section>
         </div>
       ) : (
-        
-        /* --- FOCUSED READING MODE --- */
-        <div className="animate-in slide-in-from-bottom-8 duration-700">
-          <div className="sticky top-0 z-50 w-full bg-white/90 backdrop-blur-md border-b border-gray-100 px-4 py-4">
-            <div className="max-w-3xl mx-auto flex items-center justify-between">
+        /* --- HIGH CONTRAST IMMERSIVE READER MODE --- */
+        <div className="bg-white min-h-screen">
+          <div className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-md border-b border-[#E5E5EA] px-6 py-4">
+            <div className="max-w-2xl mx-auto flex items-center justify-between">
               <button 
                 onClick={() => setIsReading(false)}
-                className="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-black flex items-center gap-2 group"
+                className="text-xs font-medium text-[#6E6E73] hover:text-[#1D1D1F] flex items-center gap-1.5"
               >
-                <Icons.Book className="w-4 h-4 group-hover:-rotate-12 transition-transform" /> 
-                Exit Reader
+                ← Exit
               </button>
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-purple-600 line-clamp-1 max-w-[180px] md:max-w-none">{novel.title}</span>
-              <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+              <span className="text-xs font-semibold text-[#1D1D1F] truncate max-w-[200px] capitalize">{novel.title}</span>
+              <div className="text-xs font-medium text-[#6E6E73]">
                 {currentChapterIndex + 1} / {chapters.length}
               </div>
             </div>
           </div>
 
-          <main className="max-w-3xl mx-auto px-4 py-24">
+          <main className="max-w-2xl mx-auto px-6 py-20">
             {activeChapter ? (
-              <article className="prose prose-2xl prose-slate mx-auto text-gray-800 font-serif leading-[2.4] tracking-tight">
-                <div className="text-center mb-24">
-                  <h2 className="text-4xl font-black text-gray-900 mb-4 font-sans tracking-tighter">{activeChapter.title}</h2>
-                  <div className="w-16 h-1 bg-gradient-to-r from-purple-500 to-pink-500 mx-auto rounded-full"></div>
+              <article className="prose prose-neutral mx-auto">
+                <div className="text-center mb-16">
+                  <h2 className="text-3xl font-semibold text-[#1D1D1F] mb-3 capitalize">{activeChapter.title}</h2>
+                  <div className="w-8 h-0.5 bg-[#4B3869] mx-auto rounded-full" />
                 </div>
                 
-                {/* Clean multiline description printing block */}
-                <div className="whitespace-pre-wrap font-medium text-gray-800 text-lg md:text-xl leading-[2.2]">
+                {/* Clean serif text container for reading fatigue prevention */}
+                <div 
+                  className="whitespace-pre-wrap font-serif text-[#1D1D1F] text-lg sm:text-xl leading-[2.1] tracking-normal"
+                  style={{ fontFamily: 'Georgia, Cambria, "Times New Roman", Times, serif' }}
+                >
                   {activeChapter.content || "This segment details empty structural context pages."}
                 </div>
               </article>
             ) : (
-              <div className="text-center text-gray-400 font-medium py-12">No active reading target parsed.</div>
+              <div className="text-center text-[#6E6E73] font-medium py-12">No active reading target parsed.</div>
             )}
 
-            {/* Pagination Controls Footer Deck */}
-            <div className="mt-32 pt-16 border-t border-gray-100 flex items-center justify-between gap-4">
-              <div>
-                <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-2">Previous Segment</p>
-                <button 
-                  disabled={currentChapterIndex === 0}
-                  onClick={() => setCurrentChapterIndex(prev => prev - 1)}
-                  className={`text-sm font-black uppercase tracking-wider ${currentChapterIndex === 0 ? 'text-gray-200 cursor-not-allowed' : 'text-black hover:text-purple-600 transition-colors'}`}
-                >
-                  ← Back
-                </button>
-              </div>
+            {/* Reader Controls Footer */}
+            <div className="mt-24 pt-10 border-t border-[#E5E5EA] flex items-center justify-between">
+              <button 
+                disabled={currentChapterIndex === 0}
+                onClick={() => setCurrentChapterIndex(prev => prev - 1)}
+                className={`text-sm font-medium ${currentChapterIndex === 0 ? 'text-[#D1D1D6] cursor-not-allowed' : 'text-[#1D1D1F] hover:text-[#4B3869]'}`}
+              >
+                ← Previous
+              </button>
               
               <button 
                 onClick={() => {
                   if (currentChapterIndex < chapters.length - 1) {
                     setCurrentChapterIndex(prev => prev + 1);
                   } else {
-                    setIsReading(false); // Return elegantly to landing hub when finished
+                    setIsReading(false);
                   }
                 }}
-                className="bg-black hover:bg-purple-600 text-white px-8 md:px-12 py-4 rounded-2xl font-black text-xs tracking-widest flex items-center gap-3 transition-all shadow-xl whitespace-nowrap"
+                className="bg-[#1D1D1F] hover:bg-[#4B3869] text-white px-6 py-3 rounded-full font-medium text-xs tracking-wide transition-colors"
               >
-                {currentChapterIndex === chapters.length - 1 ? 'FINISH READING' : 'NEXT CHAPTER'} 
-                <Icons.TrendingUp className="w-4 h-4 rotate-90"/>
+                {currentChapterIndex === chapters.length - 1 ? 'Finish Reading' : 'Next Chapter →'} 
               </button>
             </div>
           </main>

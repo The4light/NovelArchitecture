@@ -1,47 +1,73 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import Navbar from '../components/Navbar';
 import { Icons } from '../components/Icons';
 import { genreColors } from '../data/novel'; // Keeping your aesthetic styling tags
 import { supabase } from '../lib/supabaseClient';
 import { AuthContext } from '../context/AuthContext';
 
-const ProfilePage = () => {
-  const { username } = useParams(); // Captured from route configuration parameter (e.g., /user/:username)
-  const navigate = useNavigate();
-  const { user: currentLoggedUser } = useContext(AuthContext);
+// ─── Motion choreography ───
+// Everything on this page enters once, in a quiet, deliberate sequence.
+// No bouncing, no confetti — just a calm settle, the way Apple product
+// pages resolve into place.
+const EASE = [0.22, 1, 0.36, 1];
 
-  // Core Identity State Blocks
+const stagger = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.09, delayChildren: 0.08 } },
+};
+
+const rise = {
+  hidden: { opacity: 0, y: 18 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: EASE } },
+};
+
+const fontStack =
+  '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Helvetica Neue", Arial, sans-serif';
+
+const ProfilePage = () => {
+  const { username } = useParams();
+  const navigate = useNavigate();
+  const { user: currentLoggedUser, loading: authLoading } = useContext(AuthContext);
+
   const [profile, setProfile] = useState(null);
   const [novels, setNovels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
-  // Editable Profile Form States
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
 
-  // Determine if the current session token matches this profile record node
   const isOwner = currentLoggedUser && profile && currentLoggedUser.id === profile.id;
 
   useEffect(() => {
-    fetchProfileAndNovels();
-  }, [username]);
+    if (!authLoading) {
+      fetchProfileAndNovels();
+    }
+  }, [username, currentLoggedUser, authLoading]);
 
   const fetchProfileAndNovels = async () => {
     try {
       setLoading(true);
-      
-      // 1. Fetch public profile metadata details matching url text string parameter
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('username', username)
-        .single();
+
+      let query = supabase.from('profiles').select('*');
+
+      if (username) {
+        query = query.eq('username', username);
+      } else if (currentLoggedUser?.id) {
+        query = query.eq('id', currentLoggedUser.id);
+      } else {
+        setProfile(null);
+        setLoading(false);
+        return;
+      }
+
+      const { data: profileData, error: profileError } = await query.maybeSingle();
 
       if (profileError || !profileData) {
-        console.error("Profile structural node resolution error:", profileError);
+        console.error('Profile resolution error:', profileError);
         setProfile(null);
         return;
       }
@@ -50,7 +76,6 @@ const ProfilePage = () => {
       setDisplayName(profileData.display_name);
       setBio(profileData.bio || '');
 
-      // 2. Fetch all books matching the owner user_id mapping
       const { data: novelsData, error: novelsError } = await supabase
         .from('novels')
         .select('*')
@@ -61,85 +86,83 @@ const ProfilePage = () => {
         setNovels(novelsData || []);
       }
     } catch (err) {
-      console.error("Data orchestration pipeline failure:", err);
+      console.error('Data orchestration pipeline failure:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Cloudinary Direct Streaming Avatar Pipeline Engine Handler
   const handleAvatarUpload = async (e) => {
     const file = e.target.files[0];
     if (!file || !isOwner) return;
 
     try {
       setUploadingAvatar(true);
-      
-      const CLOUD_NAME = "dl4b62svx"; 
-      const UPLOAD_PRESET = "Novel_Dive"; 
+
+      const CLOUD_NAME = 'dl4b62svx';
+      const UPLOAD_PRESET = 'Novel_Dive';
 
       const formData = new FormData();
       formData.append('file', file);
       formData.append('upload_preset', UPLOAD_PRESET);
 
-      // Stream binary block directly to Cloudinary media stack
       const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
         method: 'POST',
         body: formData,
       });
       const data = await res.json();
-      
+
       if (data.secure_url) {
-        // Sync the brand new CDN address back to Supabase Core Profile Table Node
         const { error: updateError } = await supabase
           .from('profiles')
           .update({ avatar_url: data.secure_url })
           .eq('id', profile.id);
 
         if (!updateError) {
-          setProfile(prev => ({ ...prev, avatar_url: data.secure_url }));
+          setProfile((prev) => ({ ...prev, avatar_url: data.secure_url }));
         } else {
-          console.error("Supabase avatar sync rollback:", updateError);
+          console.error('Supabase avatar sync rollback:', updateError);
         }
       }
     } catch (err) {
-      console.error("Cloudinary target streaming crash:", err);
+      console.error('Cloudinary target streaming crash:', err);
     } finally {
       setUploadingAvatar(false);
     }
   };
 
-  // Submit Text Identity Field Mutations
   const handleSaveChanges = async () => {
     if (!isOwner) return;
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({
-          display_name: displayName,
-          bio: bio
-        })
+        .update({ display_name: displayName, bio: bio })
         .eq('id', profile.id);
 
       if (!error) {
-        setProfile(prev => ({ ...prev, display_name: displayName, bio: bio }));
+        setProfile((prev) => ({ ...prev, display_name: displayName, bio: bio }));
         setIsEditing(false);
       }
     } catch (err) {
-      console.error("Profile sync exception:", err);
+      console.error('Profile sync exception:', err);
     }
   };
 
-if (loading) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3 text-purple-600">
-          {/* Bulletproof Inline SVG Spinner Engine */}
-          <svg className="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-          </svg>
-          <span className="text-[10px] font-black uppercase tracking-widest animate-pulse">Resolving Creator Node Identity...</span>
+      <div
+        className="min-h-screen bg-[#FBFBFD] flex items-center justify-center"
+        style={{ fontFamily: fontStack }}
+      >
+        <div className="flex flex-col items-center gap-4">
+          <motion.div
+            className="w-7 h-7 rounded-full border-2 border-[#E5E5EA] border-t-[#4B3869]"
+            animate={{ rotate: 360 }}
+            transition={{ repeat: Infinity, duration: 0.9, ease: 'linear' }}
+          />
+          <span className="text-[11px] font-medium tracking-wide text-[#6E6E73]">
+            Loading profile
+          </span>
         </div>
       </div>
     );
@@ -147,179 +170,289 @@ if (loading) {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-[#FBFBFD]" style={{ fontFamily: fontStack }}>
         <Navbar />
-        <div className="max-w-7xl mx-auto px-4 py-40 text-center">
-          <h2 className="text-2xl font-black text-gray-900 mb-2">404: Identity Void</h2>
-          <p className="text-sm text-gray-400 font-bold mb-6">The storyteller handle "@ {username}" does not exist in our system logs.</p>
-          <button onClick={() => navigate('/')} className="bg-black text-white px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest active:scale-95 transition-transform">
-            Return to Core Feed
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: EASE }}
+          className="max-w-lg mx-auto px-6 py-44 text-center"
+        >
+          <h2 className="text-2xl font-semibold text-[#1D1D1F] tracking-tight mb-2">
+            No one here yet
+          </h2>
+          <p className="text-sm text-[#6E6E73] mb-8 leading-relaxed">
+            @{username} doesn't have a page on Novel Dive.
+          </p>
+          <button
+            onClick={() => navigate('/')}
+            className="bg-[#1D1D1F] text-white px-6 py-3 rounded-full text-sm font-medium hover:bg-[#4B3869] transition-colors duration-300"
+          >
+            Back to the feed
           </button>
-        </div>
+        </motion.div>
       </div>
     );
   }
 
-  // Calculate platform aggregate metadata points
   const authorStats = [
-    { label: 'novels', value: novels.length.toString(), icon: <Icons.Book className="w-4 h-4" /> },
-    { label: 'joined', value: new Date(profile.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }), icon: <Icons.Calendar className="w-4 h-4" /> },
+    { label: 'novels', value: novels.length.toString() },
+    {
+      label: 'joined',
+      value: profile?.created_at
+        ? new Date(profile.created_at).toLocaleDateString('en-US', {
+            month: 'short',
+            year: 'numeric',
+          })
+        : 'recently',
+    },
   ];
 
   return (
-    <div className="min-h-screen bg-white text-black selection:bg-purple-100">
+    <div className="min-h-screen bg-[#FBFBFD] text-[#1D1D1F] selection:bg-[#EDE9F7]" style={{ fontFamily: fontStack }}>
       <Navbar />
 
-      {/* ─── PROFILE FRAME CONTAINER ─── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 pt-24 sm:pt-28 pb-20">
-        <div className="flex flex-col md:flex-row items-center md:items-start gap-10 border-b border-gray-100 pb-12">
-          
-          {/* Avatar Component Frame Stacked with Cloudinary Uploader Controls */}
-          <div className="relative shrink-0 group">
-            <div className={`w-32 h-32 rounded-full overflow-hidden border-4 bg-gray-50 shadow-xl transition-all duration-300 ${uploadingAvatar ? 'animate-pulse border-purple-500' : 'border-black'}`}>
-              <img 
-                src={profile.avatar_url || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + profile.id} 
-                alt={profile.display_name} 
+      <motion.div
+        variants={stagger}
+        initial="hidden"
+        animate="show"
+        className="max-w-5xl mx-auto px-6 sm:px-8 pt-28 pb-24"
+      >
+        {/* ─── Hero ─── */}
+        <div className="relative flex flex-col items-center text-center border-b border-[#E5E5EA] pb-16">
+          {/* ambient glow — the one quiet accessory on the page */}
+          <motion.div
+            aria-hidden
+            className="pointer-events-none absolute -top-10 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full blur-3xl"
+            style={{ background: 'radial-gradient(circle, #EDE9F7 0%, transparent 70%)' }}
+            animate={
+              uploadingAvatar
+                ? { opacity: [0.5, 1, 0.5], scale: [1, 1.08, 1] }
+                : { opacity: [0.4, 0.6, 0.4] }
+            }
+            transition={{ repeat: Infinity, duration: uploadingAvatar ? 1.4 : 5, ease: 'easeInOut' }}
+          />
+
+          <motion.div variants={rise} className="relative shrink-0 group z-10">
+            <div
+              className={`w-28 h-28 rounded-full overflow-hidden ring-1 ring-[#E5E5EA] shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-all duration-300 ${
+                uploadingAvatar ? 'opacity-70' : ''
+              }`}
+            >
+              <img
+                src={profile.avatar_url || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + profile.id}
+                alt={profile.display_name}
                 className="w-full h-full object-cover"
               />
             </div>
-            
-            {/* Owner Overlay to swap profiles directly via Cloudinary */}
+
             {isOwner && (
-              <label className="absolute inset-0 bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center cursor-pointer text-white">
-                <Icons.UploadCloud className="w-5 h-5 mb-1 text-purple-400" />
-                <span className="text-[8px] font-black uppercase tracking-widest text-center px-2">Update Avatar</span>
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  onChange={handleAvatarUpload} 
-                  className="hidden" 
+              <label className="absolute inset-0 bg-black/50 backdrop-blur-[2px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center cursor-pointer">
+                <span className="text-white text-[10px] font-medium tracking-wide">Change</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                  className="hidden"
                   disabled={uploadingAvatar}
                 />
               </label>
             )}
-          </div>
+          </motion.div>
 
-          {/* Identity Matrix Field Panels */}
-          <div className="flex-1 text-center md:text-left space-y-4 w-full max-w-2xl">
-            {isEditing ? (
-              <div className="space-y-3 bg-gray-50/60 p-5 rounded-2xl border border-gray-100">
-                <div>
-                  <label className="text-[8px] font-black uppercase tracking-widest text-purple-600">Display Name</label>
-                  <input
-                    type="text"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    className="w-full bg-white text-black border border-gray-200 px-4 py-2.5 rounded-xl font-bold text-sm focus:outline-none focus:border-black transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="text-[8px] font-black uppercase tracking-widest text-purple-600">Short Identity Bio</label>
-                  <textarea
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
-                    className="w-full h-24 bg-white text-black border border-gray-200 px-4 py-2.5 rounded-xl font-medium text-xs focus:outline-none focus:border-black transition-colors resize-none leading-relaxed"
-                    placeholder="Tell your readers about your design approach or world-building workflow..."
-                  />
-                </div>
-                <div className="flex gap-2 justify-end pt-1">
-                  <button onClick={() => setIsEditing(false)} className="px-4 py-2 border border-gray-200 hover:bg-white text-[10px] font-black uppercase tracking-widest rounded-lg transition-colors">
-                    Cancel
-                  </button>
-                  <button onClick={handleSaveChanges} className="px-4 py-2 bg-purple-600 hover:bg-black text-white text-[10px] font-black uppercase tracking-widest rounded-lg transition-all shadow-sm">
-                    Save Nodes
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div>
-                <div className="flex flex-col sm:flex-row items-center gap-3 mb-2">
-                  <h2 className="text-3xl font-black tracking-tight text-gray-900 capitalize">{profile.display_name}</h2>
-                  <span className="text-[10px] font-mono bg-gray-100 px-2 py-0.5 text-gray-500 rounded font-bold">@{profile.username}</span>
-                  
-                  {isOwner && (
-                    <button 
-                      onClick={() => setIsEditing(true)}
-                      className="sm:ml-2 p-2 hover:bg-purple-50 text-gray-400 hover:text-purple-600 rounded-xl transition-all border border-gray-100 shadow-xs bg-white flex items-center justify-center active:scale-95"
-                    >
-                      <Icons.Edit className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
-                <p className="text-sm text-gray-600 leading-relaxed font-medium">
-                  {profile.bio || "This wordsmith hasn't deployed an identity introduction script yet."}
-                </p>
-              </div>
-            )}
-
-            {/* Metrics Ribbon Array */}
-            <div className="flex flex-wrap justify-center md:justify-start items-center gap-6 pt-2">
-              {authorStats.map((stat, index) => (
-                <div key={index} className="flex items-center gap-2 text-gray-400 font-bold text-xs uppercase tracking-wider">
-                  <span className="text-purple-600 bg-purple-50 p-2 rounded-xl border border-purple-100/40">{stat.icon}</span>
-                  <div>
-                    <span className="text-gray-900 font-black mr-1">{stat.value}</span>
-                    <span className="text-[10px] lowercase text-gray-400 font-medium">{stat.label}</span>
+          <motion.div variants={rise} className="mt-7 z-10 w-full max-w-xl">
+            <AnimatePresence mode="wait">
+              {isEditing ? (
+                <motion.div
+                  key="editing"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.35, ease: EASE }}
+                  className="text-left bg-white border border-[#E5E5EA] rounded-2xl p-5 shadow-[0_4px_24px_rgba(0,0,0,0.04)]"
+                >
+                  <div className="mb-4">
+                    <label className="text-[11px] font-medium text-[#6E6E73] block mb-1.5">
+                      Display name
+                    </label>
+                    <input
+                      type="text"
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      className="w-full bg-[#FBFBFD] border border-[#E5E5EA] px-3.5 py-2.5 rounded-xl text-sm font-medium focus:outline-none focus:border-[#4B3869] focus:ring-1 focus:ring-[#4B3869] transition-colors"
+                    />
                   </div>
-                </div>
+                  <div className="mb-5">
+                    <label className="text-[11px] font-medium text-[#6E6E73] block mb-1.5">
+                      Bio
+                    </label>
+                    <textarea
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                      className="w-full h-24 bg-[#FBFBFD] border border-[#E5E5EA] px-3.5 py-2.5 rounded-xl text-sm focus:outline-none focus:border-[#4B3869] focus:ring-1 focus:ring-[#4B3869] transition-colors resize-none leading-relaxed"
+                      placeholder="Tell readers about your writing..."
+                    />
+                  </div>
+                  <div className="flex gap-2 justify-end">
+                    <button
+                      onClick={() => setIsEditing(false)}
+                      className="px-4 py-2 text-[13px] font-medium text-[#6E6E73] hover:text-[#1D1D1F] transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSaveChanges}
+                      className="px-4 py-2 bg-[#4B3869] hover:bg-[#1D1D1F] text-white text-[13px] font-medium rounded-full transition-colors duration-300"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="display"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.35, ease: EASE }}
+                >
+                  <div className="flex items-center justify-center gap-2.5">
+                    <h1 className="text-[2.5rem] leading-none font-semibold tracking-tight text-[#1D1D1F] capitalize">
+                      {profile.display_name}
+                    </h1>
+                    {isOwner && (
+                      <button
+                        onClick={() => setIsEditing(true)}
+                        className="p-2 rounded-full text-[#6E6E73] hover:text-[#4B3869] hover:bg-[#EDE9F7] transition-colors duration-200"
+                        aria-label="Edit profile"
+                      >
+                        <Icons.Edit className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                  <p className="mt-1.5 text-[13px] font-medium text-[#6E6E73] tracking-wide">
+                    @{profile.username}
+                  </p>
+                  <p className="mt-4 text-[15px] text-[#6E6E73] leading-relaxed max-w-md mx-auto">
+                    {profile.bio || "This writer hasn't added a bio yet."}
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <div className="mt-7 flex items-center justify-center gap-3 text-[13px] text-[#6E6E73]">
+              {authorStats.map((stat, i) => (
+                <React.Fragment key={stat.label}>
+                  {i > 0 && <span className="text-[#D1D1D6]">·</span>}
+                  <span>
+                    <span className="font-semibold text-[#1D1D1F]">{stat.value}</span> {stat.label}
+                  </span>
+                </React.Fragment>
               ))}
             </div>
-          </div>
+          </motion.div>
         </div>
 
-        {/* ─── CREATOR PORTFOLIO NOVELS DISPLAY GRID ─── */}
+        {/* ─── Bibliography ─── */}
         <div className="mt-16">
-          <div className="flex items-center gap-3 mb-8">
-            <span className="h-px bg-gray-100 flex-1" />
-            <h4 className="text-xs font-black uppercase tracking-widest text-gray-400 font-mono">Published Bibliographic Ledger</h4>
-            <span className="h-px bg-gray-100 flex-1" />
-          </div>
+          <motion.div variants={rise} className="flex items-center gap-4 mb-10">
+            <h4 className="text-[13px] font-semibold text-[#1D1D1F] tracking-tight">
+              Published work
+            </h4>
+            <span className="h-px bg-[#E5E5EA] flex-1" />
+          </motion.div>
 
           {novels.length === 0 ? (
-            <div className="text-center py-20 border-2 border-dashed border-gray-100 rounded-3xl bg-gray-50/30">
-              <Icons.Book className="w-8 h-8 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-gray-400 font-bold">No active books linked to this profile cluster yet.</p>
-            </div>
+            <motion.div
+              variants={rise}
+              className="text-center py-24 border border-dashed border-[#E5E5EA] rounded-3xl"
+            >
+              <Icons.Book className="w-6 h-6 text-[#D1D1D6] mx-auto mb-3" />
+              <p className="text-sm text-[#6E6E73]">No novels published yet.</p>
+            </motion.div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <motion.div
+              variants={stagger}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, amount: 0.15 }}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
+            >
               {novels.map((novel) => (
-                <div 
-                  key={novel.id} 
-                  onClick={() => navigate(`/novel/${novel.id}`)}
-                  className="group cursor-pointer bg-white border border-gray-100 rounded-2xl p-4 hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
-                >
-                  <div>
-                    {/* Cover Layer with Adaptive Styling Anchor */}
-                    <div className="relative aspect-3/4 w-full bg-gray-50 rounded-xl overflow-hidden mb-5 shadow-sm border-b-4 border-purple-500/0 group-hover:border-purple-500 transition-all duration-300">
-                      <img 
-                        src={novel.thumbnail_url || "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=600&auto=format&fit=cover"} 
-                        alt={novel.title} 
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                      <div className="absolute top-3 left-3 bg-black/70 backdrop-blur-md text-white font-mono text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded">
-                        {novel.status}
-                      </div>
-                    </div>
-                    
-                    <div className={`inline-block px-3 py-1 rounded-full text-[9px] font-black tracking-widest mb-3 border ${genreColors[novel.genre] || 'bg-gray-50 text-gray-600 border-gray-200'}`}>
-                      {novel.genre.toUpperCase()}
-                    </div>
-                    
-                    <h3 className="text-lg font-black text-gray-900 mb-1 group-hover:text-purple-600 transition-colors capitalize truncate">
-                      {novel.title}
-                    </h3>
-                  </div>
-                  
-                  <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed font-medium mt-1">
-                    {novel.synopsis || novel.description || "No public canvas abstract details provided."}
-                  </p>
-                </div>
+                <NovelCard key={novel.id} novel={novel} onClick={() => navigate(`/read/${novel.id}`)} />
               ))}
-            </div>
+            </motion.div>
           )}
         </div>
-      </div>
+      </motion.div>
     </div>
+  );
+};
+
+// ─── Novel card ───
+// The one interactive signature on the page: a restrained, mouse-tracked
+// tilt with a soft shadow lift — the kind of quiet depth Apple product
+// pages use, kept subtle enough not to feel gimmicky.
+const NovelCard = ({ novel, onClick }) => {
+  const ref = useRef(null);
+  const mvX = useMotionValue(0);
+  const mvY = useMotionValue(0);
+  const rotateX = useSpring(useTransform(mvY, [-0.5, 0.5], [5, -5]), { stiffness: 300, damping: 30 });
+  const rotateY = useSpring(useTransform(mvX, [-0.5, 0.5], [-5, 5]), { stiffness: 300, damping: 30 });
+
+  const handleMouseMove = (e) => {
+    const rect = ref.current.getBoundingClientRect();
+    mvX.set((e.clientX - rect.left) / rect.width - 0.5);
+    mvY.set((e.clientY - rect.top) / rect.height - 0.5);
+  };
+
+  const handleMouseLeave = () => {
+    mvX.set(0);
+    mvY.set(0);
+  };
+
+  return (
+    <motion.div
+      variants={rise}
+      ref={ref}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      onClick={onClick}
+      style={{ rotateX, rotateY, transformPerspective: 900 }}
+      whileHover={{ scale: 1.02 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+      className="group cursor-pointer flex flex-col"
+    >
+      <div className="relative aspect-[3/4] w-full bg-[#F1F1F3] rounded-2xl overflow-hidden mb-4 shadow-[0_2px_10px_rgba(0,0,0,0.04)] group-hover:shadow-[0_20px_40px_rgba(0,0,0,0.12)] transition-shadow duration-500">
+        <img
+          src={
+            novel.thumbnail_url ||
+            'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=600&auto=format&fit=cover'
+          }
+          alt={novel.title}
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-md text-[#1D1D1F] text-[9px] font-semibold uppercase tracking-widest px-2.5 py-1 rounded-full">
+          {novel.status}
+        </div>
+      </div>
+
+      <div
+        className={`inline-flex self-start items-center px-2.5 py-0.5 rounded-full text-[9px] font-semibold tracking-widest mb-2 border ${
+          genreColors[novel.genre] || 'bg-[#F1F1F3] text-[#6E6E73] border-[#E5E5EA]'
+        }`}
+      >
+        {novel.genre.toUpperCase()}
+      </div>
+
+      <h3 className="text-[15px] font-semibold text-[#1D1D1F] mb-1 group-hover:text-[#4B3869] transition-colors capitalize truncate">
+        {novel.title}
+      </h3>
+
+      <p className="text-[13px] text-[#6E6E73] line-clamp-2 leading-relaxed">
+        {novel.synopsis || novel.description || 'No description provided.'}
+      </p>
+    </motion.div>
   );
 };
 
