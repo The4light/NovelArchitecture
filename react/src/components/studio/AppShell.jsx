@@ -1,4 +1,4 @@
-import { createElement, useContext, useEffect, useState } from "react";
+import { createElement, useContext, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   Feather,
@@ -39,9 +39,6 @@ export default function AppShell({ children }) {
     location.pathname === "/analytics";
   const [collapsed, setCollapsed] = useState(false),
     [error, setError] = useState("");
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "instant" });
-  }, [location.pathname]);
   const name =
     user?.user_metadata?.pen_name ||
     user?.user_metadata?.full_name ||

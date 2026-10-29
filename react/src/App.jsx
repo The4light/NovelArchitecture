@@ -20,7 +20,9 @@ import AuthCallback from "./pages/AuthCallback";
 import AuthEntryGate from "./components/public/AuthEntryGate";
 import PublicLayout, { PublicState } from "./components/public/PublicLayout";
 import PersistentNotes from "./components/studio/PersistentNotes";
+import ScrollToTop from "./components/ScrollToTop";
 import "./components/studio/BlueTheme.css";
+import "./components/FloatingNavigation.css";
 
 export default function App() {
   return (
@@ -34,6 +36,7 @@ export function AppExperience() {
   return (
     <PersistentNotes>
       <AppRoutes />
+      <ScrollToTop />
     </PersistentNotes>
   );
 }

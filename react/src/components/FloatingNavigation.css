@@ -1,0 +1,137 @@
+/* Shared floating controls. Opaque fallback remains readable without blur support. */
+.scroll-to-top {
+  position: fixed;
+  right: 26px;
+  bottom: 26px;
+  z-index: 210;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 46px;
+  padding: 11px 16px;
+  border: 1px solid #ffffffec;
+  border-radius: 999px;
+  background: #edf7ffed;
+  color: #356a8b;
+  box-shadow:
+    0 8px 24px #25516d20,
+    inset 0 1px 1px #fff;
+  font:
+    600 11px/1.4 Inter,
+    sans-serif;
+  cursor: pointer;
+}
+.scroll-to-top:hover {
+  background: #f8fcff;
+  transform: translateY(-2px);
+}
+.scroll-to-top:focus-visible {
+  outline: 2px solid #4189b4;
+  outline-offset: 4px;
+}
+@media (max-width: 767px) {
+  .studio-bottom-nav,
+  .workspace-bottom-nav,
+  .public-bottom-nav {
+    inset: auto auto calc(12px + env(safe-area-inset-bottom)) 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 24px);
+    max-width: 530px;
+    min-height: 68px;
+    padding: 7px;
+    gap: 3px;
+    align-items: stretch;
+    border: 1px solid #ffffffed;
+    border-radius: 999px;
+    background: #edf6fcef;
+    box-shadow:
+      0 12px 35px #284f701f,
+      0 3px 8px #284f700b,
+      inset 0 1px 1px #fff,
+      inset 0 -1px 1px #b3cddd40;
+  }
+  .studio-bottom-nav > a,
+  .workspace-bottom-nav > button,
+  .public-bottom-nav > a {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 3px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    justify-content: center;
+    gap: 4px;
+    font-size: 9px;
+    color: #58798e;
+    text-decoration: none;
+    transition:
+      background 0.2s,
+      color 0.2s,
+      box-shadow 0.2s;
+  }
+  .studio-bottom-nav > a.active,
+  .workspace-bottom-nav > button[aria-current="page"],
+  .public-bottom-nav > a[aria-current="page"] {
+    background: linear-gradient(155deg, #ffffffda, #cce9fa9c);
+    border-color: #ffffffc7;
+    color: #245f85;
+    box-shadow:
+      0 3px 9px #4a819c15,
+      inset 0 1px 1px #fff;
+  }
+  .studio-bottom-nav > a:focus-visible,
+  .workspace-bottom-nav > button:focus-visible,
+  .public-bottom-nav > a:focus-visible {
+    outline: 2px solid #4189b4;
+    outline-offset: -2px;
+  }
+  .studio-home-shell .studio-frame {
+    padding-bottom: calc(110px + env(safe-area-inset-bottom));
+  }
+  .nf-workspace .workspace-main {
+    padding-bottom: calc(110px + env(safe-area-inset-bottom));
+  }
+  .nf-home,
+  .nf-public:has(> .nf-navigation) {
+    padding-bottom: calc(110px + env(safe-area-inset-bottom));
+  }
+  .scroll-to-top {
+    right: 18px;
+    bottom: calc(98px + env(safe-area-inset-bottom));
+    padding: 11px;
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    justify-content: center;
+  }
+  .scroll-to-top > span {
+    display: none;
+  }
+}
+@supports (
+  (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+) {
+  .scroll-to-top {
+    background: #ecf7ffb8;
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    backdrop-filter: blur(24px) saturate(160%);
+  }
+  @media (max-width: 767px) {
+    .studio-bottom-nav,
+    .workspace-bottom-nav,
+    .public-bottom-nav {
+      background: linear-gradient(145deg, #ffffff9e, #e1f1fc80);
+      -webkit-backdrop-filter: blur(28px) saturate(175%);
+      backdrop-filter: blur(28px) saturate(175%);
+    }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scroll-to-top:hover {
+    transform: none;
+  }
+  .studio-bottom-nav > a,
+  .workspace-bottom-nav > button,
+  .public-bottom-nav > a {
+    transition: none;
+  }
+}

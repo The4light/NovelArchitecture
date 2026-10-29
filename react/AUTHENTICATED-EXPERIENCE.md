@@ -74,3 +74,7 @@ The editor always shows Return to chapters, including Focus Mode and mobile. Thi
 Home now uses a looping featured-book carousel, compact book grids, combined genre/type/search filters, genre selections and short-read shelves. Existing reading positions remain linked to real chapters. The display-only collection adds 24 clearly labelled fictional books without touching the database. Personal star ratings and review text save in account-scoped browser storage and are explicitly not published reviews. Public aggregates remain absent for live books unless supplied by the backend. See READING-DASHBOARD-DATA.md for the demo switch and live-data integration.
 Verified with isolated records: carousel forward wrap, inactive-slide accessibility, combined filters and empty results, sample/live action separation, personal review persistence after reopening, and no horizontal overflow at 1440, 1280, 1024, 768, 430, 390 and 360 pixels.
 
+
+## Floating navigation and return to top
+Mobile navigation uses a detached glass dock shared by public, reader and manuscript layouts, including safe-area spacing and a readable fallback when backdrop blur is unavailable. A global return-to-top button appears after 360px of scrolling and targets either the document or the manuscript's inner scrolling pane. Reduced-motion preference uses an immediate return. Verified in isolated QA for document scrolling and a long chapter: the control returned both to zero and hid afterward. Production build and frontend lint passed.
+
