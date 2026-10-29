@@ -1,603 +1,872 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, ArrowRight, BookOpen } from 'lucide-react';
-import { supabase } from '../lib/supabaseClient';
-import Navbar from '../components/Navbar';
-import { Icons } from '../components/Icons';
-import NovelCard from '../components/NovelCard';
-// ==========================================
-// TYPOGRAPHY STACK
-// ==========================================
-const gothicFont = '"Cinzel Decorative", "Cinzel", "Playfair Display", Georgia, serif';
-const sansFont = '"Plus Jakarta Sans", "Inter", system-ui, sans-serif';
-const EASE = [0.22, 1, 0.36, 1];
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import {
+  AnimatePresence,
+  motion as Motion,
+  useReducedMotion,
+} from "framer-motion";
+import {
+  ArrowDown,
+  ArrowRight,
+  BookOpen,
+  Check,
+  ChevronRight,
+  Feather,
+  FileText,
+  Layers3,
+  MapPin,
+  PanelLeft,
+  Plus,
+  Sparkles,
+  Users,
+} from "lucide-react";
+import { supabase } from "../lib/supabaseClient";
+import { genreKey, storyIllustration } from "../lib/publicCatalog";
+import { novelsData } from "../data/novel";
+import Navbar from "../components/Navbar";
+import "./Home.css";
 
-// ==========================================
-// LINE-ART BUTTERFLY — drawn in the same stroke
-// language as lucide (no butterfly glyph exists there),
-// so the decorative motif stays on-brand with the icon set.
-// ==========================================
-const ButterflyGlyph = ({ className = '', style = {} }) => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.3"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={className}
-    style={style}
-  >
-    <path d="M12 7.2v10.3" />
-    <path d="M12 7.2c0-1.4-.5-2.4-1.3-3.1" />
-    <path d="M12 7.2c0-1.4.5-2.4 1.3-3.1" />
-    <path d="M11 8c-1.6-2.5-4.4-4.4-6.7-3.7-1.7.5-2.2 2.6-1.2 4.7 1.2 2.5 4 3.7 6.8 3.1" />
-    <path d="M13 8c1.6-2.5 4.4-4.4 6.7-3.7 1.7.5 2.2 2.6 1.2 4.7-1.2 2.5-4 3.7-6.8 3.1" />
-    <path d="M10.3 13c-2.3 1-3.9 3.3-3.5 5.6.3 1.6 2.2 2 3.6.9 1.8-1.3 2.5-3.6 2.2-5.7" />
-    <path d="M13.7 13c2.3 1 3.9 3.3 3.5 5.6-.3 1.6-2.2 2-3.6.9-1.8-1.3-2.5-3.6-2.2-5.7" />
-  </svg>
-);
+const WORDS = ["begin", "grow", "unfold", "live"];
+const SAMPLE = novelsData[2];
+const previewChapters = [
+  "The city at the edge",
+  "A name in the darkness",
+  "What the river remembers",
+];
 
-// Gentle, staggered drift — never more than a few degrees of rotation,
-// so it reads as "alive" rather than distracting.
-const drift = (delay = 0, distance = 8, duration = 6) => ({
-  animate: {
-    y: [0, -distance, 0],
-    rotate: [0, 4, -2, 0],
-    opacity: [0.5, 0.85, 0.5],
-  },
-  transition: { duration, delay, repeat: Infinity, ease: 'easeInOut' },
-});
+function Author({ novel }) {
+  const profile = novel.profiles;
+  const name =
+    profile?.display_name || novel.author_name || novel.author || "Anonymous";
+  return profile?.username ? (
+    <Link className="nf-author" to={`/profile/${profile.username}`}>
+      {name}
+    </Link>
+  ) : (
+    <span className="nf-author">{name}</span>
+  );
+}
 
-const FloatingButterflies = ({ variant = 'default' }) => {
-  const clusters = {
-    default: [
-      { top: '10%', right: '8%', size: 22, color: '#F59E0B', delay: 0, dur: 6 },
-      { top: '22%', right: '18%', size: 13, color: '#A855F7', delay: 1.1, dur: 7.5 },
-      { bottom: '16%', left: '6%', size: 18, color: '#A855F7', delay: 0.4, dur: 5.5 },
-      { bottom: '30%', left: '15%', size: 11, color: '#F59E0B', delay: 1.8, dur: 8 },
-      { top: '45%', left: '3%', size: 9, color: '#F59E0B', delay: 2.4, dur: 6.5 },
-    ],
-    edge: [
-      { top: '12%', right: '4%', size: 16, color: '#A855F7', delay: 0.2, dur: 6.5 },
-      { bottom: '18%', right: '10%', size: 12, color: '#F59E0B', delay: 1.4, dur: 5.8 },
-      { top: '55%', left: '4%', size: 14, color: '#F59E0B', delay: 0.8, dur: 7 },
-    ],
-  };
+function Book({ novel, className = "", decorative = false }) {
+  const artwork =
+    novel.thumbnail_url || novel.cover || storyIllustration(novel);
+  return (
+    <div
+      className={`nf-book ${className}`}
+      data-genre={genreKey(novel.genre)}
+      aria-hidden={decorative || undefined}
+    >
+      {artwork && (
+        <img
+          src={artwork}
+          alt={decorative ? "" : `Cover artwork for ${novel.title}`}
+          loading={decorative ? "eager" : "lazy"}
+          onError={(event) => {
+            event.currentTarget.style.display = "none";
+          }}
+        />
+      )}
+      <div className="nf-book-type">
+        <span>{novel.genre || "Fiction"}</span>
+        <strong>{novel.title.replaceAll("_", " ")}</strong>
+        <span>
+          {novel.profiles?.display_name ||
+            novel.author_name ||
+            novel.author ||
+            "NovelForge"}
+        </span>
+      </div>
+      <span className="nf-book-spine" />
+    </div>
+  );
+}
 
+function ChangingWord() {
+  const reduceMotion = useReducedMotion();
+  const [index, setIndex] = useState(0);
+  useEffect(() => {
+    if (reduceMotion) return;
+    const timer = window.setInterval(
+      () => setIndex((value) => (value + 1) % WORDS.length),
+      3600,
+    );
+    return () => window.clearInterval(timer);
+  }, [reduceMotion]);
   return (
     <>
-      {clusters[variant].map((b, i) => (
-        <motion.span
-          key={i}
-          {...drift(b.delay, 9, b.dur)}
-          className="absolute pointer-events-none select-none z-20"
-          style={{
-            top: b.top,
-            bottom: b.bottom,
-            left: b.left,
-            right: b.right,
-            color: b.color,
-            filter: `drop-shadow(0 0 6px ${b.color}55)`,
-          }}
-        >
-          <ButterflyGlyph style={{ width: b.size, height: b.size }} />
-        </motion.span>
-      ))}
+      <span className="nf-sr-only">begin</span>
+      <Motion.span
+        className="nf-changing-word"
+        layout={!reduceMotion}
+        transition={{ duration: 0.35 }}
+        aria-hidden="true"
+      >
+        <span className="nf-word-dot" />
+        <AnimatePresence mode="popLayout" initial={false}>
+          <Motion.em
+            key={WORDS[index]}
+            initial={reduceMotion ? false : { opacity: 0, y: 9 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.25 }}
+          >
+            {WORDS[index]}
+          </Motion.em>
+        </AnimatePresence>
+        <span key={index} className="nf-writing-cursor" />
+      </Motion.span>
     </>
   );
-};
+}
 
-// ==========================================
-// PAINT — soft white splashes, like a brush was
-// flicked across the dark canvas. Pure ambience,
-// never claims attention from content.
-// ==========================================
-const PaintSplash = ({ top, left, right, bottom, size = 420, opacity = 0.07 }) => (
-  <div
-    aria-hidden
-    className="absolute pointer-events-none rounded-full"
-    style={{
-      top,
-      left,
-      right,
-      bottom,
-      width: size,
-      height: size,
-      background: `radial-gradient(circle, rgba(255,255,255,${opacity}) 0%, transparent 72%)`,
-      filter: 'blur(10px)',
-    }}
-  />
-);
-
-// ==========================================
-// NOVEL CARD — let loose from its box. Image
-// leads, everything else breathes underneath it.
-// ==========================================
-
-// const NovelCard = ({ novel }) => {
-//   const navigate = useNavigate();
-//   const authorProfile = novel.profiles;
-
-//   return (
-//     <motion.div
-//       variants={cardRise}
-//       onClick={() => navigate(`/read/${novel.id}`)}
-//       whileHover={{ y: -10 }}
-//       transition={{ type: 'spring', stiffness: 260, damping: 22 }}
-//       className="group cursor-pointer flex flex-col"
-//       style={{ fontFamily: sansFont }}
-//     >
-//       <div className="relative overflow-hidden rounded-2xl bg-[#0B1120] aspect-[3/4] shadow-lg shadow-black/20 group-hover:shadow-2xl group-hover:shadow-[#F59E0B]/10 transition-shadow duration-500">
-//         <motion.img
-//           src={novel.thumbnail_url || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=600'}
-//           alt={novel.title}
-//           className="w-full h-full object-cover"
-//           whileHover={{ scale: 1.06 }}
-//           transition={{ duration: 0.7, ease: EASE }}
-//         />
-//         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-//         <div className="absolute top-3 right-3 bg-[#0B1120]/85 backdrop-blur-md px-2 py-0.5 rounded border border-[#F59E0B]/30 text-[#F59E0B] text-[8px] font-bold tracking-[0.15em] uppercase">
-//           {novel.status || 'LIVE'}
-//         </div>
-//       </div>
-
-//       <div className="pt-4 space-y-1.5">
-//         <span className="inline-block text-[8px] font-extrabold tracking-widest text-[#A855F7] uppercase">
-//           {novel.genre}
-//         </span>
-//         <h4 className="font-semibold text-[#E5E7EB] text-sm group-hover:text-[#F59E0B] transition-colors line-clamp-1 capitalize tracking-tight">
-//           {novel.title}
-//         </h4>
-//         <p className="text-[12px] text-gray-400 line-clamp-2 leading-relaxed font-normal">
-//           {novel.synopsis || novel.description || 'No summary available yet.'}
-//         </p>
-
-//         <div
-//           onClick={(e) => {
-//             e.stopPropagation();
-//             if (authorProfile?.username) navigate(`/profile/${authorProfile.username}`);
-//           }}
-//           className="flex items-center gap-2 pt-3 mt-2 border-t border-white/5 group/auth w-fit"
-//         >
-//           <img
-//             src={authorProfile?.avatar_url || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + novel.user_id}
-//             className="w-4 h-4 rounded-full ring-1 ring-white/10"
-//             alt=""
-//           />
-//           <span className="text-[11px] text-gray-500 group-hover/auth:text-white transition-colors">
-//             {authorProfile?.display_name || 'Anonymous'}
-//           </span>
-//         </div>
-//       </div>
-//     </motion.div>
-//   );
-// };
-
-const CardGrid = ({ novels }) => (
-  <motion.div
-    variants={{ show: { transition: { staggerChildren: 0.08 } } }}
-    initial="hidden"
-    whileInView="show"
-    viewport={{ once: true, amount: 0.15 }}
-    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-16"
-    style={{ fontFamily: '"JetBrains Mono", monospace' }}
-  >
-    {novels.map((novel) => (
-      <NovelCard key={novel.id} novel={novel} />
-    ))}
-  </motion.div>
-);
-
-// ==========================================
-// HERO CAROUSEL
-// ==========================================
-const HeroCarousel = ({ novels }) => {
-  const navigate = useNavigate();
-  const [activeIndex, setActiveIndex] = useState(0);
-  const timerRef = useRef(null);
-
-  useEffect(() => {
-    if (novels.length === 0) return;
-    timerRef.current = setInterval(() => {
-      setActiveIndex((prevIndex) => (prevIndex + 1) % novels.length);
-    }, 5000);
-    return () => clearInterval(timerRef.current);
-  }, [novels]);
-
-  if (novels.length === 0) return null;
-  const activeNovel = novels[activeIndex];
-  const authorProfile = activeNovel.profiles;
-
+function StudioPreview() {
+  const [tab, setTab] = useState("Manuscript");
+  const [chapter, setChapter] = useState(0);
+  const tabs = [
+    { label: "Manuscript", icon: <FileText size={16} /> },
+    { label: "Characters", icon: <Users size={16} /> },
+    { label: "Notes", icon: <Layers3 size={16} /> },
+  ];
   return (
-    <div className="relative w-full min-h-[100vh] bg-[#0B1120] overflow-hidden flex items-center border-b border-[#1E294B]">
-      <FloatingButterflies variant="default" />
-      <PaintSplash top="-8%" left="12%" size={520} opacity={0.06} />
-      <PaintSplash bottom="0%" right="20%" size={360} opacity={0.05} />
-
-    <div className="absolute inset-0 h-full pointer-events-none z-0">  
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0B1120] via-[#0B1120]/75 to-transparent z-10" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-transparent to-transparent z-10" />
-        <AnimatePresence mode="wait">
-          <motion.img
-            key={activeNovel.id}
-            src={activeNovel.thumbnail_url || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=1200'}
-            alt=""
-            initial={{ opacity: 0, scale: 1.05 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.1, ease: EASE }}
-            className="w-full h-full object-cover opacity-40 lg:opacity-60 object-center"
-          />
-        </AnimatePresence>
-      </div>
-
-      <div className="max-w-7xl mx-auto w-full px-6 sm:px-8 lg:px-16 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 pt-24 pb-16">
-        <div className="lg:col-span-8 flex flex-col justify-center">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeNovel.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -14 }}
-              transition={{ duration: 0.55, ease: EASE }}
-              className="space-y-6"
-            >
-              <div className="inline-flex items-center gap-2 bg-[#0E1424]/90 border border-[#1E294B] px-3 py-1 rounded-md w-fit">
-                <span className="text-[#F59E0B] text-[9px] font-bold tracking-[0.25em] uppercase" style={{ fontFamily: sansFont }}>
-                  Spotlight Chrono
-                </span>
-                <span className="text-gray-600">|</span>
-                <span className="text-[#A855F7] text-[9px] font-bold tracking-widest uppercase" style={{ fontFamily: sansFont }}>
-                  {activeNovel.genre}
-                </span>
-              </div>
-
-              <h1
-                className="text-4xl sm:text-6xl lg:text-7xl font-normal text-[#F3F4F6] tracking-tight leading-[1.1] capitalize select-none"
-                style={{ fontFamily: gothicFont }}
-              >
-                {activeNovel.title}
-              </h1>
-
-              <p className="text-gray-400 text-sm sm:text-base max-w-xl font-medium leading-relaxed font-serif italic">
-                "{activeNovel.synopsis || activeNovel.description || 'No description available for this title yet.'}"
-              </p>
-
-              <div
-                onClick={() => authorProfile?.username && navigate(`/profile/${authorProfile.username}`)}
-                className="flex items-center gap-3 w-fit cursor-pointer group/heroAuth"
-                style={{ fontFamily: sansFont }}
-              >
-                <img
-                  src={authorProfile?.avatar_url || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + activeNovel.user_id}
-                  className="w-5 h-5 rounded-full ring-1 ring-[#F59E0B]/30"
-                  alt=""
-                />
-                <span className="text-xs text-gray-500 group-hover/heroAuth:text-white transition-colors">
-                  Penned by <span className="text-[#F3F4F6] font-medium tracking-wide">{authorProfile?.display_name || 'Anonymous'}</span>
-                </span>
-              </div>
-
-              <div className="pt-4 flex items-center gap-6" style={{ fontFamily: sansFont }}>
-                <Link to={`/read/${activeNovel.id}`}>
-                  <motion.button
-                    whileHover={{ scale: 1.04 }}
-                    whileTap={{ scale: 0.97 }}
-                    className="bg-[#F59E0B] text-black px-8 py-3.5 rounded-lg text-xs font-bold tracking-widest uppercase hover:bg-white transition-colors duration-300 shadow-xl shadow-[#F59E0B]/10"
-                  >
-                    Start Reading
-                  </motion.button>
-                </Link>
-              </div>
-            </motion.div>
-          </AnimatePresence>
-        </div>
-
-      </div>
-
-      <div className="absolute bottom-0 left-0 w-full h-1 bg-[#1E294B] z-20 flex">
-        {novels.map((_, idx) => (
-          <div
-            key={idx}
-            onClick={() => setActiveIndex(idx)}
-            className="flex-1 h-full cursor-pointer relative border-r border-[#0B1120] last:border-0"
-          >
-            {activeIndex === idx && (
-              <div
-                key={activeIndex}
-                className="absolute top-0 left-0 h-full bg-[#F59E0B] animate-carousel-progress"
-                style={{ animationDuration: '5000ms', animationTimingFunction: 'linear', fillMode: 'forwards' }}
-              />
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-// Real splatter art. mix-blend-screen keeps the colors vivid while
-// letting them melt into the dark background with no visible edge
-// from the background removal. Drop-shadow adds a soft color glow
-// so it reads as light hitting the canvas, not a sticker on top of it.
-const Splatter = ({ src, className, size = 520, opacity = 1, glow, flip = false, duration = 11 }) => (
-  <motion.img
-    src={src}
-    alt=""
-    aria-hidden
-    className={`absolute pointer-events-none select-none z-0 mix-blend-screen ${className}`}
-    style={{
-      width: size,
-      opacity,
-      transform: flip ? 'scaleX(-1)' : undefined,
-      filter: glow ? `drop-shadow(0 0 40px ${glow})` : undefined,
-    }}
-    animate={{ scale: [1, 1.04, 1], rotate: flip ? [0, -3, 0] : [0, 3, 0] }}
-    transition={{ duration, repeat: Infinity, ease: 'easeInOut' }}
-  />
-);
-
-const EditorialVisionSection = () => (
-  <section className="bg-[#080C16] border-b border-[#1E294B] py-32 relative overflow-hidden">
-    <Splatter
-      src="/SplatterTwo.png"
-      className="-top-[12%] -right-[6%]"
-      size={620}
-      opacity={0.85}
-      glow="rgba(232,60,140,0.35)"
-      duration={12}
-    />
-    <Splatter
-      src="/SplatterOne.png"
-      className="-bottom-[18%] -left-[10%]"
-      size={460}
-      opacity={0.35}
-      flip
-      duration={9}
-    />
-
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.3 }}
-      transition={{ duration: 0.7, ease: EASE }}
-      className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-16 grid grid-cols-1 lg:grid-cols-12 gap-16 items-center relative z-10"
+    <div
+      className="nf-studio"
+      aria-label="Illustrative writing workspace preview"
     >
-      <div className="lg:col-span-5 space-y-6 text-left" style={{ fontFamily: sansFont }}>
-        <div className="inline-flex px-2 py-0.5 bg-[#A855F7]/10 border border-[#A855F7]/30 rounded text-[#A855F7] text-[9px] font-bold tracking-widest uppercase">
-          Platform Engine Forge
-        </div>
-        <h2 className="text-3xl sm:text-5xl font-normal tracking-tight text-[#F3F4F6] leading-[1.15]" style={{ fontFamily: gothicFont }}>
-          Dive Deep Into <span className="text-[#A855F7]">Recent</span> Fantasies
-        </h2>
-        <p className="text-gray-400 text-sm leading-relaxed font-normal">
-          Command infinite dynamic manuscripts. Our systemic design pipeline bridges pristine writing engines directly with readers looking for their next escape.
-        </p>
-        <div className="pt-4">
-          <Link to="/explore" className="group inline-flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-[#F59E0B] hover:text-white transition-colors">
-            Explore Compilations
-            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1.5 transition-transform" />
-          </Link>
-        </div>
+      <div className="nf-studio-toolbar">
+        <span>
+          <Feather size={16} /> NovelForge{" "}
+          <span className="nf-toolbar-divider">/</span>
+          <span className="nf-preview-title">The Last Kingdom of Shadows</span>
+        </span>
+        <span className="nf-preview-label">Workspace preview</span>
       </div>
-
-      <div className="lg:col-span-7 relative flex justify-center items-center">
-        <div className="absolute w-[80%] h-[80%] bg-[#A855F7]/5 blur-[120px] rounded-full pointer-events-none" />
-        <motion.div
-          whileHover={{ y: -6 }}
-          transition={{ type: 'spring', stiffness: 250, damping: 22 }}
-          className="relative w-full aspect-[16/10] rounded-2xl overflow-hidden border border-[#1E294B] bg-[#0B1120] shadow-[0_30px_60px_rgba(0,0,0,0.6)] group"
+      <div className="nf-studio-body">
+        <aside className="nf-studio-sidebar">
+          <span className="nf-sidebar-label">Your story, together.</span>
+          <div
+            className="nf-preview-tabs"
+            role="tablist"
+            aria-label="Preview sections"
+            onKeyDown={(event) => {
+              const keys = [
+                "ArrowLeft",
+                "ArrowRight",
+                "ArrowUp",
+                "ArrowDown",
+                "Home",
+                "End",
+              ];
+              if (!keys.includes(event.key)) return;
+              event.preventDefault();
+              const current = tabs.findIndex((item) => item.label === tab);
+              const next =
+                event.key === "Home"
+                  ? 0
+                  : event.key === "End"
+                    ? tabs.length - 1
+                    : (current +
+                        (["ArrowLeft", "ArrowUp"].includes(event.key)
+                          ? -1
+                          : 1) +
+                        tabs.length) %
+                      tabs.length;
+              setTab(tabs[next].label);
+              event.currentTarget.querySelectorAll("[role=tab]")[next].focus();
+            }}
+          >
+            {tabs.map(({ label, icon }) => (
+              <button
+                key={label}
+                role="tab"
+                id={`nf-tab-${label}`}
+                aria-controls="nf-preview-panel"
+                aria-selected={tab === label}
+                tabIndex={tab === label ? 0 : -1}
+                onClick={() => setTab(label)}
+              >
+                {icon}
+                {label}
+                {label === "Manuscript" && <span>3</span>}
+              </button>
+            ))}
+          </div>
+          <div className="nf-preview-chapters">
+            <span className="nf-sidebar-label">Chapters</span>
+            {previewChapters.map((title, i) => (
+              <button
+                key={title}
+                className={
+                  chapter === i && tab === "Manuscript" ? "is-active" : ""
+                }
+                onClick={() => {
+                  setChapter(i);
+                  setTab("Manuscript");
+                }}
+              >
+                <span>0{i + 1}</span>
+                {title}
+              </button>
+            ))}
+          </div>
+          <div className="nf-sidebar-bottom">
+            <Feather size={15} />
+            <span>A world of your own.</span>
+          </div>
+        </aside>
+        <div
+          className="nf-manuscript"
+          role="tabpanel"
+          id="nf-preview-panel"
+          aria-labelledby={`nf-tab-${tab}`}
+          tabIndex={0}
         >
-          <img
-            src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1200"
-            alt="Fantasy backdrop"
-            className="w-full h-full object-cover object-center grayscale-[20%] group-hover:grayscale-0 transition-all duration-700 ease-out"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#080C16] via-transparent to-transparent opacity-80" />
-
-          <div className="absolute bottom-6 left-6 flex items-center gap-3 bg-[#0B1120]/90 backdrop-blur-md border border-[#1E294B] px-4 py-2.5 rounded-xl shadow-lg">
-            <Sparkles className="w-4 h-4 text-[#F59E0B]" />
-            <div>
-              <p className="text-[9px] uppercase font-bold text-gray-400 tracking-wider">AI Studio Grid</p>
-              <p className="text-xs font-semibold text-[#F3F4F6]" style={{ fontFamily: sansFont }}>
-                Answering your creative passions
+          {tab === "Manuscript" ? (
+            <>
+              <div className="nf-manuscript-meta">
+                <span>Chapter 0{chapter + 1}</span>
+                <span>
+                  <span className="nf-status-dot" /> Draft
+                </span>
+              </div>
+              <span className="nf-manuscript-kicker">
+                THE LAST KINGDOM OF SHADOWS
+              </span>
+              <h3>{previewChapters[chapter]}</h3>
+              <p className="nf-drop-cap">
+                {
+                  [
+                    "The city had forgotten the sound of rain. For a hundred years, its people had looked to an empty sky, collecting stories of storms the way other kingdoms collected gold.",
+                    "Someone had written her name on the door. Not the name she used in the market, nor the one her mother whispered. Her real name. The one the kingdom had buried.",
+                    "At dawn, the river returned something it had kept for a hundred years. A small brass key, warm as a living thing, and a promise nobody remembered making.",
+                  ][chapter]
+                }
               </p>
-            </div>
-          </div>
-        </motion.div>
-      </div>
-    </motion.div>
-  </section>
-);
-
-// ==========================================
-// SECTION HEADER — shared motion wrapper
-// ==========================================
-const SectionHeader = ({ eyebrow, title, action, actionLabel, gothic }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, amount: 0.4 }}
-    transition={{ duration: 0.6, ease: EASE }}
-    className="flex items-end justify-between mb-14 border-b border-[#1E294B] pb-6"
-  >
-    <div>
-      <span className="text-[10px] font-extrabold text-[#F59E0B] tracking-[0.2em] uppercase" style={{ fontFamily: sansFont }}>
-        {eyebrow}
-      </span>
-      <h2
-        className={gothic ? 'text-2xl font-normal text-[#F3F4F6] mt-1' : 'text-lg font-medium tracking-widest text-[#F3F4F6] uppercase mt-1'}
-        style={{ fontFamily: gothic ? gothicFont : sansFont }}
-      >
-        {title}
-      </h2>
-    </div>
-    {action && (
-      <Link to={action} className="text-xs font-semibold tracking-wide text-gray-500 hover:text-[#F59E0B] transition-colors flex items-center gap-1.5" style={{ fontFamily: sansFont }}>
-        {actionLabel} <ArrowRight className="w-3.5 h-3.5" />
-      </Link>
-    )}
-  </motion.div>
-);
-
-// ==========================================
-// MAIN HOMEPAGE
-// ==========================================
-const HomePage = () => {
-  const [novels, setNovels] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchLiveDirectory = async () => {
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from('novels')
-          .select(`
-            *,
-            profiles:user_id (
-              username,
-              display_name,
-              avatar_url
-            )
-          `)
-          .eq('status', 'Published')
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
-        setNovels(data || []);
-      } catch (err) {
-        console.error('Catalog sync error:', err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchLiveDirectory();
-  }, []);
-
-  const topCarouselNovels = novels.slice(0, 5);
-  const trendingNovels = novels.slice(0, 4);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#0B1120] flex flex-col items-center justify-center gap-3" style={{ fontFamily: sansFont }}>
-        <motion.div
-          className="w-5 h-5 border-2 border-[#1E294B] border-t-[#F59E0B] rounded-full"
-          animate={{ rotate: 360 }}
-          transition={{ repeat: Infinity, duration: 0.8, ease: 'linear' }}
-        />
-        <span className="text-[9px] font-bold tracking-[0.25em] text-[#F59E0B]">SYNCHRONIZING SCROLL MATRIX</span>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-[#0B1120] text-[#E5E7EB] antialiased selection:bg-[#F59E0B] selection:text-black">
-      <style>{`
-        @keyframes carouselProgress {
-          from { width: 0%; }
-          to { width: 100%; }
-        }
-        .animate-carousel-progress {
-          animation-name: carouselProgress;
-        }
-      `}</style>
-
-      <Navbar />
-
-      <HeroCarousel novels={topCarouselNovels} />
-
-      {/* TRENDING */}
-      <section className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-16 py-32 relative">
-        <PaintSplash top="0%" left="-4%" size={340} opacity={0.05} />
-        <SectionHeader eyebrow="CURRENT DIRECTORY" title="Trending Novels" action="/explore" actionLabel="View Catalog" />
-
-        {trendingNovels.length === 0 ? (
-          <div className="text-center font-normal py-16 text-gray-500 border border-dashed border-[#1E294B] rounded-2xl bg-[#0E1424]/40" style={{ fontFamily: sansFont }}>
-            No live catalog files loaded yet.
-          </div>
-        ) : (
-          <CardGrid novels={trendingNovels} />
-        )}
-      </section>
-
-      <EditorialVisionSection />
-
-      {/* RECENTLY TRANSMITTED */}
-      <section className="bg-[#0E1424]/30 border-t border-b border-[#1E294B] py-32 relative overflow-hidden">
-        <FloatingButterflies variant="edge" />
-        <PaintSplash bottom="-6%" right="8%" size={400} opacity={0.05} />
-
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-16">
-          <SectionHeader eyebrow="CHRONO ARCHIVE FEED" title="Recently Transmitted Scrolls" gothic />
-
-          {novels.length === 0 ? (
-            <p className="text-sm font-normal text-gray-500 italic text-center">Nothing in the feed yet.</p>
+              <p>
+                Beyond the last house, where the road became a path and the path
+                became a question, a light was burning.
+              </p>
+              <p>
+                She had never been this far from home.
+                <br />
+                She had never felt so close to it.
+              </p>
+              <span className="nf-preview-footnote">
+                An imagined first page. Every world starts somewhere.
+              </span>
+            </>
+          ) : tab === "Characters" ? (
+            <>
+              <div className="nf-manuscript-meta">
+                <span>Story bible</span>
+                <Users size={17} />
+              </div>
+              <span className="nf-manuscript-kicker">
+                THE PEOPLE BEHIND THE PAGES
+              </span>
+              <h3>Someone worth following.</h3>
+              <div className="nf-character-preview">
+                <span className="nf-character-monogram">E</span>
+                <div>
+                  <h4>Elara</h4>
+                  <span>Protagonist · Keeper of lost things</span>
+                </div>
+              </div>
+              <p>
+                She remembers what the rest of the city has forgotten. Now she
+                must decide what is worth bringing back.
+              </p>
+              <div className="nf-character-traits">
+                <span>A quiet courage</span>
+                <span>A dangerous secret</span>
+                <span>An unfinished promise</span>
+              </div>
+              <span className="nf-preview-footnote">
+                Illustrative character notes
+              </span>
+            </>
           ) : (
-            <CardGrid novels={novels.slice(0, 4)} />
+            <>
+              <div className="nf-manuscript-meta">
+                <span>Scratchpad</span>
+                <Layers3 size={17} />
+              </div>
+              <span className="nf-manuscript-kicker">KEEP THE SPARK</span>
+              <h3>Nothing is a small idea.</h3>
+              <p>
+                What if the city’s missing rain is a memory, rather than a
+                curse?
+              </p>
+              <div className="nf-note-preview">
+                <span>Remember for chapter three</span>
+                <p>
+                  The river returns what the kingdom has forgotten. The key is
+                  only the beginning.
+                </p>
+              </div>
+              <span className="nf-preview-footnote">
+                Illustrative story notes
+              </span>
+            </>
           )}
         </div>
-      </section>
-
-      {/* AI + NEWS */}
-      <section className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-16 py-32">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8" style={{ fontFamily: sansFont }}>
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.6, ease: EASE }}
-            whileHover={{ y: -6 }}
-            className="bg-gradient-to-br from-[#0E1424] to-[#080C16] border border-[#1E294B] rounded-2xl p-8 lg:p-12 relative overflow-hidden group shadow-2xl"
-          >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#F59E0B]/5 rounded-full blur-2xl group-hover:bg-[#F59E0B]/10 transition-all pointer-events-none" />
-            <div className="space-y-4">
-              <span className="text-[9px] font-bold text-[#F59E0B] tracking-[0.25em] uppercase">INTELLIGENT WORKSPACE</span>
-              <h4 className="text-2xl font-semibold text-white tracking-tight">AI Copilot Engine</h4>
-              <p className="text-gray-400 text-sm leading-relaxed max-w-sm">
-                Stuck at a blank page? Expand outlines, rewrite dialogue, and polish drafts with premium models built right into your editor.
-              </p>
-              <div className="pt-4">
-                <Link to="/write">
-                  <button className="bg-white text-black hover:bg-[#F59E0B] px-6 py-3 rounded-lg text-xs font-bold tracking-widest uppercase transition-colors shadow-lg active:scale-95">
-                    Launch Engine
-                  </button>
-                </Link>
-              </div>
+        <aside className="nf-studio-codex">
+          <span className="nf-sidebar-label">
+            <Sparkles size={14} /> Worldbuilding
+          </span>
+          <div className="nf-codex-cover">
+            <Book novel={SAMPLE} decorative />
+          </div>
+          <div className="nf-codex-note">
+            <span>
+              <Users size={14} /> Character
+            </span>
+            <strong>Elara</strong>
+            <p>
+              Keeper of lost things.
+              <br />
+              Still finding her own way.
+            </p>
+          </div>
+          <div className="nf-codex-location">
+            <MapPin size={15} />
+            <div>
+              <strong>The old city</strong>
+              <span>A place that remembers.</span>
             </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.6, ease: EASE, delay: 0.1 }}
-            whileHover={{ y: -6 }}
-            className="bg-gradient-to-br from-[#0E1424] to-[#080C16] border border-[#1E294B] rounded-2xl p-8 lg:p-12 relative overflow-hidden group shadow-2xl"
-          >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#A855F7]/5 rounded-full blur-2xl group-hover:bg-[#A855F7]/10 transition-all pointer-events-none" />
-            <div className="space-y-4">
-              <span className="text-[9px] font-bold text-[#A855F7] tracking-[0.25em] uppercase">TRANSMISSION LOGGER</span>
-              <h4 className="text-2xl font-semibold text-white tracking-tight">Global News Center</h4>
-              <p className="text-gray-400 text-sm leading-relaxed max-w-sm">
-                Track platform updates, feature releases, and upcoming community events inside our developer feed.
-              </p>
-              <div className="pt-4">
-                <Link to="/explore">
-                  <button className="bg-transparent text-white border border-[#1E294B] hover:border-[#A855F7] px-6 py-3 rounded-lg text-xs font-bold tracking-widest uppercase transition-all active:scale-95">
-                    Read Log Streams
-                  </button>
-                </Link>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
+          </div>
+        </aside>
+      </div>
+      <div className="nf-studio-status">
+        <span>
+          <Check size={13} /> A home for every chapter, character, and
+          possibility.
+        </span>
+        <Link to="/write">
+          Make it yours <ArrowRight size={14} />
+        </Link>
+      </div>
     </div>
   );
-};
+}
 
-export default HomePage;
+function StoryShelf({ novels, loading, error, onRetry }) {
+  return (
+    <section
+      className="nf-discover nf-section"
+      id="discover"
+      aria-labelledby="nf-discover-title"
+    >
+      <div className="nf-section-heading">
+        <div>
+          <span className="nf-eyebrow">FOR THE READER IN YOU</span>
+          <h2 id="nf-discover-title">
+            Find your next <em>obsession.</em>
+          </h2>
+        </div>
+        <Link className="nf-text-link" to="/explore">
+          All stories <ArrowRight size={18} />
+        </Link>
+      </div>
+      {loading ? (
+        <div className="nf-shelf-loading" role="status">
+          <BookOpen size={24} />
+          <p>Opening the bookshelf…</p>
+        </div>
+      ) : error ? (
+        <div className="nf-shelf-empty" role="status">
+          <BookOpen size={26} />
+          <h3>The bookshelf is taking a moment.</h3>
+          <p>
+            We couldn’t load the stories. Your next world will be here when the
+            connection returns.
+          </p>
+          <button className="nf-button nf-button-quiet" onClick={onRetry}>
+            Try again <ArrowRight size={16} />
+          </button>
+        </div>
+      ) : novels.length === 0 ? (
+        <div className="nf-shelf-empty">
+          <BookOpen size={26} />
+          <h3>The first story could be yours.</h3>
+          <p>A new bookshelf. Infinite possibilities.</p>
+          <Link className="nf-button nf-button-quiet" to="/write">
+            Start a story <ArrowRight size={16} />
+          </Link>
+        </div>
+      ) : (
+        <div className="nf-story-shelf">
+          {novels.slice(0, 4).map((novel, i) => (
+            <article
+              className={`nf-story-item nf-story-item-${i}`}
+              key={novel.id}
+            >
+              <Link
+                className="nf-story-cover-link"
+                to={`/read/${novel.id}`}
+                aria-label={`Read ${novel.title}`}
+              >
+                <Book novel={novel} />
+              </Link>
+              <div className="nf-story-info">
+                <span className="nf-eyebrow">{novel.genre || "Fiction"}</span>
+                <h3>
+                  <Link to={`/read/${novel.id}`}>{novel.title}</Link>
+                </h3>
+                <Author novel={novel} />
+                {i === 0 && (
+                  <p>
+                    {novel.synopsis ||
+                      novel.description ||
+                      "A new world is waiting between these pages."}
+                  </p>
+                )}
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+      <div className="nf-genre-line">
+        <span>Follow your curiosity.</span>
+        {["Fantasy", "Romance", "Mystery", "Sci-Fi"].map((genre) => (
+          <Link to="/explore" key={genre}>
+            {genre}
+            <ChevronRight size={13} />
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+export default function HomePage() {
+  const [novels, setNovels] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const reduceMotion = useReducedMotion();
+  useEffect(() => {
+    let active = true;
+    const request = new AbortController();
+    const fetchLiveDirectory = async () => {
+      try {
+        const { data, error: queryError } = await supabase
+          .from("novels")
+          .select(`*, profiles:user_id (username, display_name, avatar_url)`)
+          .eq("status", "Published")
+          .order("created_at", { ascending: false })
+          .abortSignal(request.signal);
+        if (queryError) throw queryError;
+        if (active) setNovels(data || []);
+      } catch {
+        if (active) setError(true);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    fetchLiveDirectory();
+    return () => {
+      active = false;
+      request.abort();
+    };
+  }, [attempt]);
+  const heroBooks = novels.length
+    ? [novels[0], novels[1] || novels[0]]
+    : [SAMPLE, novelsData[0]];
+  const reveal = reduceMotion
+    ? {}
+    : {
+        initial: { opacity: 0, y: 24 },
+        whileInView: { opacity: 1, y: 0 },
+        viewport: { once: true, amount: 0.12 },
+        transition: { duration: 0.65 },
+      };
+  return (
+    <div className="nf-home">
+      <a className="nf-skip-link" href="#nf-main">
+        Skip to content
+      </a>
+      <Navbar />
+      <main id="nf-main">
+        <section className="nf-hero" aria-labelledby="nf-hero-title">
+          <div className="nf-hero-grain" aria-hidden="true" />
+          <div className="nf-hero-copy">
+            <span className="nf-eyebrow nf-hero-eyebrow">
+              <span className="nf-asterisk">✳</span> A LITTLE WONDER. A WORLD OF
+              POSSIBILITIES.
+            </span>
+            <h1 id="nf-hero-title">
+              Where stories
+              <span className="nf-heading-line">
+                <ChangingWord /> &amp; worlds
+              </span>
+              come alive<span className="nf-gold-period">.</span>
+            </h1>
+            <p>
+              Discover stories worth disappearing into.
+              <br className="nf-desktop-break" /> Or build a world entirely your
+              own.
+            </p>
+            <div className="nf-hero-actions">
+              <Link className="nf-button nf-button-gold" to="/write">
+                Start writing <ArrowRight size={17} />
+              </Link>
+              <Link className="nf-button nf-button-quiet" to="/explore">
+                Explore stories <BookOpen size={17} />
+              </Link>
+            </div>
+            <span className="nf-hero-caption">
+              For the reader. The writer. The worldbuilder.
+            </span>
+          </div>
+          <div className="nf-hero-objects">
+            <div className="nf-hero-book-left">
+              <Book novel={heroBooks[0]} decorative />
+              <span className="nf-handwritten">
+                a world to get lost in <span>↗</span>
+              </span>
+            </div>
+            <div className="nf-floating-page" aria-hidden="true">
+              <span>
+                <Feather size={13} /> The beginning of something
+              </span>
+              <p>
+                “What if,” she thought,
+                <br />
+                <em>“this is only the beginning?”</em>
+              </p>
+              <div />
+              <div />
+              <div />
+            </div>
+            <div className="nf-hero-book-right">
+              <Book novel={heroBooks[1]} decorative />
+              <span className="nf-book-tab">
+                <BookOpen size={12} /> Just one more chapter.
+              </span>
+            </div>
+            <span className="nf-hero-spark nf-spark-one" aria-hidden="true">
+              ✧
+            </span>
+            <span className="nf-hero-spark nf-spark-two" aria-hidden="true">
+              ✳
+            </span>
+          </div>
+          <a
+            href="#the-studio"
+            className="nf-hero-scroll"
+            aria-label="Discover the NovelForge writing studio"
+          >
+            <ArrowDown size={16} />
+          </a>
+        </section>
+        <section
+          className="nf-ecosystem nf-section"
+          id="the-studio"
+          aria-labelledby="nf-ecosystem-title"
+        >
+          <div className="nf-ecosystem-heading">
+            <span className="nf-eyebrow">
+              FROM A FLICKER OF AN IDEA TO THE FINAL FULL STOP.
+            </span>
+            <h2 id="nf-ecosystem-title">
+              One story. <em>Every possibility.</em>
+            </h2>
+            <p>
+              Write the chapters. Know the characters. Build the world.
+              <br className="nf-desktop-break" /> Keep it all in one beautifully
+              connected place.
+            </p>
+          </div>
+          <Motion.div {...reveal} className="nf-studio-wrap">
+            <StudioPreview />
+            <div className="nf-floating-note" aria-hidden="true">
+              <span>note to self</span>
+              <p>
+                Let the world be
+                <br />a little bigger.
+              </p>
+              <span>↗</span>
+            </div>
+          </Motion.div>
+          <div className="nf-story-journey">
+            <span>
+              <span>01</span> Catch the idea
+            </span>
+            <span className="nf-journey-dash" />
+            <span>
+              <span>02</span> Find the story
+            </span>
+            <span className="nf-journey-dash" />
+            <span>
+              <span>03</span> Give it a world
+            </span>
+          </div>
+        </section>
+        <StoryShelf
+          novels={novels}
+          loading={loading}
+          error={error}
+          onRetry={() => {
+            setLoading(true);
+            setError(false);
+            setAttempt((value) => value + 1);
+          }}
+        />
+        <section className="nf-world-section" aria-labelledby="nf-world-title">
+          <div className="nf-world-inner nf-section">
+            <div className="nf-world-copy">
+              <span className="nf-eyebrow">
+                THERE’S MORE TO A STORY THAN ITS PAGES.
+              </span>
+              <h2 id="nf-world-title">
+                A place for the
+                <br />
+                entire <em>world</em>
+                <br />
+                behind the book.
+              </h2>
+              <p>
+                The people with secrets. The cities with histories. The tiny
+                detail that changes everything. Give every part of your
+                imagination somewhere to belong.
+              </p>
+              <Link className="nf-text-link" to="/write">
+                Meet your writing space <ArrowRight size={18} />
+              </Link>
+              <span className="nf-world-annotation">
+                Messy ideas. Beautiful possibilities.
+              </span>
+            </div>
+            <Motion.div
+              {...reveal}
+              className="nf-story-bible"
+              aria-label="Illustrative arrangement of manuscript, character, location, lore, and notes"
+            >
+              <div className="nf-bible-manuscript">
+                <span>
+                  <FileText size={15} /> Manuscript <span>01 — 03</span>
+                </span>
+                <h3>
+                  Every world starts
+                  <br />
+                  with <em>a word.</em>
+                </h3>
+                <p>
+                  The city had forgotten the sound of rain. But Elara
+                  remembered.
+                </p>
+                <div className="nf-paper-lines" />
+                <span className="nf-bible-chapter">
+                  Chapter 01 <ArrowRight size={14} />
+                </span>
+              </div>
+              <div className="nf-bible-character">
+                <div className="nf-character-art">
+                  E<span>✧</span>
+                </div>
+                <span className="nf-eyebrow">CHARACTER</span>
+                <h4>Elara</h4>
+                <p>
+                  A keeper of lost things.
+                  <br />A story still unfolding.
+                </p>
+                <span className="nf-little-tag">Protagonist</span>
+              </div>
+              <div className="nf-bible-location">
+                <span>
+                  <MapPin size={15} /> Locations &amp; lore
+                </span>
+                <h4>The old city</h4>
+                <p>
+                  Where the river remembers
+                  <br />
+                  what the kingdom forgot.
+                </p>
+                <span className="nf-map-lines" aria-hidden="true" />
+              </div>
+              <div className="nf-bible-sticky">
+                <span>an idea, not to be lost</span>
+                <p>
+                  What if the rain
+                  <br />
+                  is a memory?
+                </p>
+                <span>↗</span>
+              </div>
+              <span className="nf-bible-caption">
+                <Plus size={14} /> All the little things that make it real.
+              </span>
+            </Motion.div>
+          </div>
+        </section>
+        <section
+          className="nf-workspace-feature nf-section"
+          aria-labelledby="nf-workspace-title"
+        >
+          <div className="nf-workspace-detail">
+            <div className="nf-mini-toolbar">
+              <PanelLeft size={16} />
+              <span>Your writing space</span>
+              <span className="nf-little-tag">Draft</span>
+            </div>
+            <div className="nf-workspace-sheet">
+              <span className="nf-eyebrow">CHAPTER ONE</span>
+              <h3>
+                Make room for
+                <br />
+                <em>the next sentence.</em>
+              </h3>
+              <p>
+                A quiet page. A clear mind.
+                <br />
+                And everything you need, close at hand.
+              </p>
+              <span className="nf-static-cursor" />
+            </div>
+            <div className="nf-workspace-tools">
+              <span>
+                <Layers3 size={15} /> Chapters &amp; notes
+              </span>
+              <Link to="/write">
+                Open your studio <ArrowRight size={15} />
+              </Link>
+            </div>
+          </div>
+          <div className="nf-workspace-copy">
+            <span className="nf-eyebrow">LESS FRICTION. MORE FICTION.</span>
+            <h2 id="nf-workspace-title">
+              Get into
+              <br />
+              <em>your flow.</em>
+            </h2>
+            <p>
+              A dedicated space for the work you love. Move between chapters,
+              keep your story bible nearby, and share your story when you’re
+              ready.
+            </p>
+            <ul>
+              <li>
+                <Check size={16} /> Your manuscript, chapter by chapter
+              </li>
+              <li>
+                <Check size={16} /> Characters, lore, and notes in reach
+              </li>
+              <li>
+                <Check size={16} /> A place to write. A way to publish.
+              </li>
+            </ul>
+            <Link className="nf-text-link" to="/write">
+              Find your focus <ArrowRight size={17} />
+            </Link>
+          </div>
+        </section>
+        <section
+          className="nf-reading-section"
+          aria-labelledby="nf-reading-title"
+        >
+          <div className="nf-reading-inner nf-section">
+            <div className="nf-reading-intro">
+              <span className="nf-eyebrow">
+                AND WHEN IT’S TIME TO DISAPPEAR…
+              </span>
+              <h2 id="nf-reading-title">
+                Just you.
+                <br />
+                And <em>one more chapter.</em>
+              </h2>
+              <p>
+                Leave the noise behind. Meet a new world, find a new voice, and
+                remember why you fell in love with stories.
+              </p>
+              <Link className="nf-text-link" to="/explore">
+                Find something to get lost in <ArrowRight size={17} />
+              </Link>
+            </div>
+            <div className="nf-reading-composition">
+              <div className="nf-reading-book">
+                <Book novel={heroBooks[0]} decorative />
+              </div>
+              <div className="nf-reader-page">
+                <div className="nf-reader-top">
+                  <BookOpen size={15} />
+                  <span>A moment between the pages</span>
+                  <span>01</span>
+                </div>
+                <span className="nf-quote-mark" aria-hidden="true">
+                  “
+                </span>
+                <blockquote>
+                  Beyond the last house, where the road became a path and the
+                  path became a question, <em>a light was burning.</em>
+                </blockquote>
+                <span className="nf-reader-credit">An imagined first page</span>
+                <div className="nf-reader-progress">
+                  <span />
+                </div>
+                <span className="nf-reader-bottom">
+                  The rest of the world can wait.
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section
+          className="nf-finale nf-section"
+          aria-labelledby="nf-finale-title"
+        >
+          <span className="nf-eyebrow">
+            <Feather size={15} /> EVERY GREAT STORY STARTS SOMEWHERE.
+          </span>
+          <h2 id="nf-finale-title">
+            There is a world
+            <br />
+            in your head.
+            <br />
+            <em>Forge it.</em>
+          </h2>
+          <div className="nf-hero-actions">
+            <Link className="nf-button nf-button-gold" to="/write">
+              Start writing <ArrowRight size={17} />
+            </Link>
+            <Link className="nf-button nf-button-quiet" to="/explore">
+              Explore NovelForge <ArrowRight size={17} />
+            </Link>
+          </div>
+          <span className="nf-finale-star" aria-hidden="true">
+            ✳
+          </span>
+          <div className="nf-finale-pages" aria-hidden="true">
+            <FileText size={34} />
+            <span>
+              Once upon
+              <br />
+              <em>a possibility.</em>
+            </span>
+          </div>
+        </section>
+      </main>
+      <footer className="nf-footer">
+        <div className="nf-footer-inner">
+          <Link className="nf-brand" to="/">
+            <Feather size={23} strokeWidth={1.7} />
+            <span>
+              NovelForge<span className="nf-brand-period">.</span>
+            </span>
+          </Link>
+          <p>A home for stories. A space for yours.</p>
+          <nav aria-label="Footer">
+            <Link to="/explore">Explore</Link>
+            <Link to="/write">Write</Link>
+            <Link to="/library">Library</Link>
+          </nav>
+          <span className="nf-copyright">
+            © {new Date().getFullYear()} NovelForge
+          </span>
+        </div>
+        <div className="nf-footer-wordmark" aria-hidden="true">
+          NovelForge<span>✳</span>
+        </div>
+      </footer>
+    </div>
+  );
+}

@@ -1,107 +1,158 @@
-import React, { useEffect, useState } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
-import Navbar from '../components/Navbar';
-import { Icons } from '../components/Icons';
-import { novelsData } from '../data/novel';
+import { Link, useSearchParams } from "react-router-dom";
+import { useContext } from "react";
+import { AuthContext } from "../context/AuthState";
+import ExplorePage from "./Explore";
+import { ArrowRight, Search, X } from "lucide-react";
+import PublicLayout, {
+  PublicState,
+  SectionHeading,
+} from "../components/public/PublicLayout";
+import StoryBook from "../components/public/StoryBook";
+import { novelsData } from "../data/novel";
+import { genreKey, genreLabel } from "../lib/publicCatalog";
 
-const SearchPage = () => {
-  const [searchParams] = useSearchParams();
-  const query = searchParams.get('q') || '';
-  const [isLoading, setIsLoading] = useState(!!query);
-
-  // Simulated API Delay for that "Professional" feel
-useEffect(() => {
-        
-        if (!isLoading && query) {
-            setIsLoading(true);
-        }
-
-        // Use the effect ONLY to schedule the "Stop Loading" event
-        const timer = setTimeout(() => {
-            setIsLoading(false);
-        }, 400);
-
-        return () => clearTimeout(timer);
-        
-        // We include isLoading in the dependency so the timer resets 
-        // correctly if we manually toggle it.
-        }, [query, isLoading]);
-
-  const results = novelsData.filter(novel => 
-    novel.title.toLowerCase().includes(query.toLowerCase()) ||
-    novel.author.toLowerCase().includes(query.toLowerCase())
+function PublicSearchPage() {
+  const [params, setParams] = useSearchParams();
+  const query = params.get("q") || "";
+  const genre = params.get("genre") || "";
+  const update = (key, value) =>
+    setParams(
+      (previous) => {
+        const next = new URLSearchParams(previous);
+        if (value) next.set(key, value);
+        else next.delete(key);
+        return next;
+      },
+      { replace: true },
+    );
+  const genres = [...new Set(novelsData.map((novel) => novel.genre))];
+  const results = novelsData.filter(
+    (novel) =>
+      (!genre || genreKey(novel.genre) === genreKey(genre)) &&
+      `${novel.title} ${novel.author}`
+        .toLowerCase()
+        .includes(query.toLowerCase().trim()),
   );
-
   return (
-    <div className="min-h-screen bg-white">
-      <Navbar />
-      
-      <main className="max-w-7xl mx-auto px-4 py-12">
-        {/* Search Header with Meta Stats */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 pb-8 border-b border-gray-100">
+    <PublicLayout className="pf-search-page">
+      <div className="pf-container pf-page-top">
+        <div className="pf-editorial-header">
           <div>
-            <h1 className="text-sm font-black uppercase tracking-[0.4em] text-purple-600 mb-4">Search Engine</h1>
-            <h2 className="text-4xl font-black text-gray-900 tracking-tighter">
-              {query ? `Results for "${query}"` : "All Archives"}
-            </h2>
+            <span className="pf-kicker">FOLLOW A THREAD. FIND A WORLD.</span>
+            <h1>
+              What are you
+              <br />
+              <em>looking for?</em>
+            </h1>
+            <p>Sometimes, all it takes is a name.</p>
           </div>
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-4 md:mt-0">
-            {results.length} Matches found in 0.02s
-          </p>
+          <span className="pf-editorial-star" aria-hidden="true">
+            ✧
+          </span>
         </div>
-
-        {isLoading ? (
-          /* Professional Skeleton Loader */
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="animate-pulse flex gap-6">
-                <div className="w-24 h-36 bg-gray-100 rounded-xl"></div>
-                <div className="flex-1 space-y-4 py-2">
-                  <div className="h-4 bg-gray-100 rounded w-3/4"></div>
-                  <div className="h-4 bg-gray-100 rounded w-1/2"></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : results.length > 0 ? (
-          /* Result List: Optimized for Reading Precision */
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-8">
+        <form
+          className="pf-search-field pf-search-large"
+          role="search"
+          onSubmit={(event) => event.preventDefault()}
+        >
+          <Search size={23} />
+          <label className="pf-sr-only" htmlFor="story-search">
+            Search sample titles and authors
+          </label>
+          <input
+            id="story-search"
+            type="search"
+            placeholder="Search by title or author"
+            value={query}
+            onChange={(event) => update("q", event.target.value)}
+          />
+          {query && (
+            <button
+              type="button"
+              aria-label="Clear search"
+              onClick={() => update("q", "")}
+            >
+              <X size={20} />
+            </button>
+          )}
+        </form>
+        <div className="pf-preview-notice">
+          <span>Preview collection</span>
+          <p>
+            This search currently uses {novelsData.length} sample titles. For
+            published NovelForge stories, use the live catalogue.
+          </p>
+          <Link
+            to={`/explore${query ? `?q=${encodeURIComponent(query)}` : ""}`}
+          >
+            Search live stories
+            <ArrowRight size={16} />
+          </Link>
+        </div>
+        <nav className="pf-genre-filters" aria-label="Filter sample results">
+          <button aria-pressed={!genre} onClick={() => update("genre", "")}>
+            All genres
+          </button>
+          {genres.map((item) => (
+            <button
+              key={item}
+              aria-pressed={genreKey(item) === genreKey(genre)}
+              onClick={() => update("genre", item)}
+            >
+              {genreLabel(item)}
+            </button>
+          ))}
+        </nav>
+        <SectionHeading
+          eyebrow={query ? `RESULTS FOR “${query}”` : "THE SAMPLE BOOKSHELF"}
+          title={
+            query ? (
+              <>
+                A story with <em>your name on it.</em>
+              </>
+            ) : (
+              <>
+                A little <em>inspiration.</em>
+              </>
+            )
+          }
+        >
+          <span className="pf-muted" role="status">
+            {results.length} sample {results.length === 1 ? "match" : "matches"}
+          </span>
+        </SectionHeading>
+        {results.length ? (
+          <div className="pf-search-results">
             {results.map((novel) => (
-              <Link 
-                to={`/read/${novel.id}`} 
-                key={novel.id}
-                className="group flex gap-6 p-4 rounded-3xl border border-transparent hover:border-gray-100 hover:bg-gray-50/50 transition-all"
-              >
-                <div className="w-28 shrink-0 shadow-xl rounded-xl overflow-hidden group-hover:-rotate-2 transition-transform">
-                  <img src={novel.cover} alt={novel.title} className="w-full h-full object-cover" />
-                </div>
-                <div className="flex flex-col justify-center">
-                  <span className="text-[10px] font-black text-purple-500 uppercase tracking-widest mb-2">{novel.genre}</span>
-                  <h3 className="text-xl font-black text-gray-900 mb-1 group-hover:text-purple-600 transition-colors">{novel.title}</h3>
-                  <p className="text-sm font-bold text-gray-400 mb-3">by {novel.author}</p>
-                  <p className="text-xs text-gray-500 line-clamp-2 italic font-medium">"{novel.description}"</p>
-                </div>
-              </Link>
+              <StoryBook key={novel.id} novel={novel} compact sample />
             ))}
           </div>
         ) : (
-          /* High-End Empty State */
-          <div className="text-center py-24">
-            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-8 border border-gray-100">
-              <Icons.Edit className="w-8 h-8 text-gray-300" />
-            </div>
-            <h3 className="text-2xl font-black text-gray-900 mb-2">No direct matches.</h3>
-            <p className="text-gray-400 font-medium mb-10">Try a more general term or browse our curated genres.</p>
-            <div className="flex justify-center gap-4">
-              <Link to="/explore" className="px-8 py-3 bg-black text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-purple-600 transition-all">
-                Browse Genres
-              </Link>
-            </div>
-          </div>
+          <PublicState
+            as="h2"
+            title="No matches on this shelf."
+            action={
+              <button
+                className="pf-button pf-button-quiet"
+                onClick={() => setParams({})}
+              >
+                Clear search &amp; filters
+                <ArrowRight size={17} />
+              </button>
+            }
+          >
+            Try a different name or genre, or search the live catalogue instead.
+          </PublicState>
         )}
-      </main>
-    </div>
+        <Link className="pf-back-link" to="/explore">
+          Back to the live bookshelf
+          <ArrowRight size={17} />
+        </Link>
+      </div>
+    </PublicLayout>
   );
-};
-
-export default SearchPage;
+}
+export default function SearchPage() {
+  const { user } = useContext(AuthContext);
+  return user ? <ExplorePage /> : <PublicSearchPage />;
+}

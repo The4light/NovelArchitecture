@@ -1,0 +1,119 @@
+/* Home-only ice-blue experiment. Notes keep their warm, square paper treatment. */
+.studio-home-shell {
+  background: #f2f9fd;
+  --studio-border: #d9e9f1;
+}
+.studio-home-shell .studio-frame {
+  background:
+    radial-gradient(ellipse at 90% 0%, #dff3ff, transparent 55%), #f7fbfe;
+  min-height: 100dvh;
+}
+.studio-home-shell .studio-sidebar {
+  background: linear-gradient(165deg, #f7fcff, #eaf5fb);
+  border-color: #d7e7ef;
+}
+.studio-home-shell .studio-topbar {
+  background: #ffffffd9;
+  border-color: #deedf4;
+}
+.studio-home-shell .studio-nav-group a {
+  border-radius: 12px;
+  color: #596e7b;
+}
+.studio-home-shell .studio-nav-group a:hover {
+  background: #e0f0fa;
+}
+.studio-home-shell .studio-nav-group a.active {
+  background: #cfeafa;
+  color: #285e7e;
+  box-shadow: inset 0 0 0 1px #b9dcec;
+}
+.studio-home-shell .studio-avatar {
+  background: #d3ecf9;
+  color: #356f8d;
+  border-color: #f7fcff;
+}
+.studio-home .studio-heading .studio-gold,
+.studio-home .studio-section-title > a {
+  color: #327a9d;
+}
+.studio-home .studio-command {
+  border: 1px solid #bbdfef;
+  border-radius: 24px;
+  background: #32627b;
+  box-shadow: 0 9px 28px #5b94b114;
+}
+.studio-home .studio-command-art {
+  background:
+    linear-gradient(90deg, #173e55ed, #3b789d91 53%, #b9e7f21a),
+    url("/images/novelforge-portal.webp") center 55% / cover;
+}
+.studio-home .studio-command-copy > .pf-kicker {
+  color: #c3eaff;
+}
+.studio-home .studio-command h2 em {
+  color: #d2f0ff;
+}
+.studio-home .studio-command-copy p,
+.studio-home .studio-current-chapter,
+.studio-home .studio-command-caption {
+  color: #e0eef5;
+}
+.studio-home .pf-button {
+  border-radius: 12px;
+}
+.studio-home .studio-resume,
+.studio-home .studio-empty {
+  background: linear-gradient(120deg, #e1f3ff, #f6fcff);
+  border: 1px solid #c7e3f2;
+  border-radius: 20px;
+}
+.studio-home .studio-resume .pf-button-dark {
+  background: #2b6483;
+  color: #fff;
+}
+.studio-home .studio-empty > span {
+  color: #5c9cbd;
+}
+.studio-home .studio-mini-shelf .studio-small-book,
+.studio-home .studio-discovery .studio-small-book {
+  background: #ffffffd9;
+  border: 1px solid #d7e9f3;
+  border-radius: 17px;
+  padding: 16px;
+  box-shadow: 0 3px 12px #699eb008;
+}
+.studio-home .studio-discovery {
+  border-color: #d9eaf2;
+}
+.studio-home .studio-home-aside {
+  background: linear-gradient(155deg, #fff, #eaf7ff);
+  border: 1px solid #d1e7f3;
+  border-radius: 22px;
+  padding: 24px;
+  align-self: start;
+}
+.studio-home .studio-home-aside h2 em {
+  color: #5c95b2;
+}
+.studio-home .studio-footprint > div {
+  border-color: #d9eaf3;
+}
+.studio-home .studio-footprint dd {
+  color: #327b9e;
+}
+.studio-home .studio-footprint dt {
+  color: #647c8b;
+}
+@media (max-width: 560px) {
+  .studio-home .studio-command {
+    border-radius: 20px;
+  }
+  .studio-home .studio-mini-shelf .studio-small-book,
+  .studio-home .studio-discovery .studio-small-book {
+    padding: 13px;
+  }
+  .studio-home .studio-home-aside {
+    padding: 21px;
+  }
+}

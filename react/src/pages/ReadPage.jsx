@@ -1,242 +1,510 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import Navbar from '../components/Navbar';
-import { Icons } from '../components/Icons';
-import { genreColors } from '../data/novel';
-import { supabase } from '../lib/supabaseClient';
+import { useContext, useEffect, useRef, useState } from "react";
+import { Link, useParams, useSearchParams } from "react-router-dom";
+import {
+  ArrowLeft,
+  ArrowRight,
+  BookOpen,
+  Check,
+  ChevronDown,
+  Feather,
+  Moon,
+  Sun,
+} from "lucide-react";
+import { motion as Motion, useReducedMotion } from "framer-motion";
+import { AuthContext } from "../context/AuthState";
+import { StudioClientContext, usePersonalLibrary } from "../lib/studioData";
+import { RICH_PREFIX, cleanHTML } from "../lib/richText";
+import { SaveBook } from "../components/studio/StudioPieces";
+import PublicLayout, {
+  PublicFooter,
+  PublicState,
+  SectionHeading,
+} from "../components/public/PublicLayout";
+import { AuthorLink, BookCover } from "../components/public/StoryBook";
+import { genreLabel, worldArtwork } from "../lib/publicCatalog";
+import "./ReadPage.css";
 
-const fontStack = '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif';
-
-const ReadPage = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  
-  const [novel, setNovel] = useState(null);
-  const [chapters, setChapters] = useState([]);
-  const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
-  const [isReading, setIsReading] = useState(false);
-  const [loading, setLoading] = useState(true);
-
+function StoryPage({ id }) {
+  const supabase = useContext(StudioClientContext);
+  const { user } = useContext(AuthContext);
+  const library = usePersonalLibrary();
+  const [libraryError, setLibraryError] = useState("");
+  const [state, setState] = useState({
+    novel: null,
+    chapters: [],
+    loading: true,
+    error: false,
+  });
+  const [params, setParams] = useSearchParams();
+  const [attempt, setAttempt] = useState(0);
+  const [fontSize, setFontSize] = useState(20);
+  const [night, setNight] = useState(false);
+  const chapterId = params.get("chapter");
+  const reduceMotion = useReducedMotion();
+  const readerHeading = useRef(null);
   useEffect(() => {
-    const fetchFullNarrativeData = async () => {
+    let active = true;
+    const controller = new AbortController();
+    (async () => {
       try {
-        setLoading(true);
-        
-        // Fetch novel metadata details alongside creator profile record via user_id relationship mapping
-        const { data: novelData, error: novelErr } = await supabase
-          .from('novels')
-          .select(`
-            *,
-            profiles:user_id (
-              username,
-              display_name,
-              avatar_url
-            )
-          `)
-          .eq('id', id)
-          .single();
-
-        if (novelErr) throw novelErr;
-        setNovel(novelData);
-
-        const { data: chapterData, error: chapErr } = await supabase
-          .from('chapters')
-          .select('*')
-          .eq('novel_id', id)
-          .eq('status', 'Published')
-          .order('chapter_order', { ascending: true });
-
-        if (chapErr) throw chapErr;
-        setChapters(chapterData || []);
-      } catch (err) {
-        console.error("Error loading narrative matrix:", err.message);
-      } finally {
-        setLoading(false);
+        const { data: novel, error } = await supabase
+          .from("novels")
+          .select("*, profiles:user_id (username, display_name, avatar_url)")
+          .eq("id", id)
+          .maybeSingle()
+          .abortSignal(controller.signal);
+        if (error) throw error;
+        if (!novel) {
+          if (active)
+            setState({
+              novel: null,
+              chapters: [],
+              loading: false,
+              error: false,
+            });
+          return;
+        }
+        const { data: chapters, error: chapterError } = await supabase
+          .from("chapters")
+          .select("*")
+          .eq("novel_id", id)
+          .eq("status", "Published")
+          .order("chapter_order", { ascending: true })
+          .abortSignal(controller.signal);
+        if (chapterError) throw chapterError;
+        if (active)
+          setState({
+            novel,
+            chapters: chapters || [],
+            loading: false,
+            error: false,
+          });
+      } catch {
+        if (active)
+          setState({ novel: null, chapters: [], loading: false, error: true });
       }
+    })();
+    return () => {
+      active = false;
+      controller.abort();
     };
-
-    fetchFullNarrativeData();
-  }, [id]);
-
+  }, [id, attempt, supabase]);
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [id, isReading, currentChapterIndex]);
+    window.scrollTo({ top: 0, behavior: "instant" });
+    if (chapterId && !state.loading)
+      readerHeading.current?.focus({ preventScroll: true });
+  }, [chapterId, state.loading]);
 
-  if (loading) {
+  const { novel, chapters, loading, error } = state;
+  const chapterIndex = chapters.findIndex(
+    (chapter) => String(chapter.id) === chapterId,
+  );
+  const activeChapter = chapters[chapterIndex];
+  const position = library.items.find((n) => String(n.id) === String(id));
+  const resumeChapter =
+    !position?.completed &&
+    chapters.find((c) => String(c.id) === String(position?.chapterId));
+  useEffect(() => {
+    if (user && novel && activeChapter) {
+      try {
+        library.update(novel, {
+          chapterId: activeChapter.id,
+          chapterTitle: activeChapter.title,
+          chapterNumber: chapterIndex + 1,
+          totalChapters: chapters.length,
+          completed: false,
+        });
+      } catch {
+        setLibraryError(
+          "Your reading position could not be saved in this browser.",
+        );
+      }
+    }
+  }, [user?.id, novel?.id, activeChapter?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const openChapter = (chapter) => setParams({ chapter: String(chapter.id) });
+  const retry = () => {
+    setState((value) => ({ ...value, loading: true }));
+    setAttempt((value) => value + 1);
+  };
+  if (loading)
     return (
-      <div className="min-h-screen bg-[#FBFBFD] flex items-center justify-center" style={{ fontFamily: fontStack }}>
-        <div className="w-6 h-6 rounded-full border-2 border-[#E5E5EA] border-t-[#4B3869] animate-spin" />
-      </div>
+      <PublicLayout>
+        <PublicState title="A world is opening…" loading />
+      </PublicLayout>
     );
-  }
+  if (error)
+    return (
+      <PublicLayout>
+        <PublicState
+          title="A pause at the threshold."
+          action={
+            <button className="pf-button pf-button-gold" onClick={retry}>
+              Try again
+              <ArrowRight size={17} />
+            </button>
+          }
+        >
+          We couldn’t load this story. Please try again in a moment.
+        </PublicState>
+      </PublicLayout>
+    );
+  if (!novel)
+    return (
+      <PublicLayout>
+        <PublicState title="This story isn’t on the shelf.">
+          It may be unpublished or no longer available. There are other worlds
+          waiting to be discovered.
+        </PublicState>
+      </PublicLayout>
+    );
+  if (chapterId && !activeChapter)
+    return (
+      <PublicLayout>
+        <PublicState
+          title="This chapter isn’t available."
+          action={
+            <button
+              className="pf-button pf-button-gold"
+              onClick={() => setParams({})}
+            >
+              Back to the story
+              <ArrowLeft size={17} />
+            </button>
+          }
+        >
+          Only published chapters can be read here. Return to the story to
+          choose another.
+        </PublicState>
+      </PublicLayout>
+    );
 
-  if (!novel) {
-    return <div className="min-h-screen flex items-center justify-center text-[#6E6E73] font-medium" style={{ fontFamily: fontStack }}>Manuscript dataset not found.</div>;
-  }
-
-  const activeChapter = chapters[currentChapterIndex];
-  const authorProfile = novel.profiles;
-
-  return (
-    <div className="min-h-screen bg-[#FBFBFD] text-[#1D1D1F] antialiased selection:bg-[#EDE9F7]" style={{ fontFamily: fontStack }}>
-      {!isReading && <Navbar />}
-
-      {!isReading ? (
-        <div className="max-w-5xl mx-auto px-6 sm:px-8 pt-28 pb-20">
-          <header className="flex flex-col md:flex-row items-center gap-12 border-b border-[#E5E5EA] pb-12">
-            
-            {/* Elegant Cover Artwork */}
-            <div className="w-48 sm:w-64 shrink-0">
-              <div className="relative aspect-[3/4] rounded-2xl overflow-hidden shadow-[0_16px_40px_rgba(0,0,0,0.06)] border border-[#E5E5EA]">
-                <img 
-                  src={novel.thumbnail_url || "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=600"} 
-                  alt={novel.title} 
-                  className="w-full h-full object-cover" 
-                />
-              </div>
-            </div>
-
-            {/* Book Info Metadata */}
-            <div className="flex-1 text-center md:text-left space-y-4">
-              <div className={`inline-flex px-2.5 py-0.5 rounded-full text-[9px] font-bold tracking-widest uppercase border ${genreColors[novel.genre] || 'bg-[#F1F1F3] text-[#6E6E73] border-[#E5E5EA]'}`}>
-                {novel.genre}
-              </div>
-              
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold text-[#1D1D1F] tracking-tight capitalize leading-tight">
-                {novel.title}
-              </h1>
-              
-              {/* Connected Dynamic Profile Navigation Card */}
-              <div 
-                onClick={() => authorProfile?.username && navigate(`/profile/${authorProfile.username}`)}
-                className="inline-flex items-center justify-center md:justify-start gap-3 group cursor-pointer border border-[#E5E5EA] bg-white px-4 py-2 rounded-xl hover:border-[#1D1D1F]/20 transition-all shadow-sm"
-              >
-                <img 
-                  src={authorProfile?.avatar_url || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + novel.user_id} 
-                  className="w-7 h-7 rounded-full object-cover ring-1 ring-[#E5E5EA]" 
-                  alt="" 
-                />
-                <div className="text-left">
-                  <p className="text-[9px] font-bold text-[#6E6E73] uppercase tracking-wider leading-none">Author</p>
-                  <p className="text-xs font-semibold text-[#1D1D1F] transition-colors mt-0.5">
-                    {authorProfile?.display_name || 'Anonymous'}
-                  </p>
-                </div>
-              </div>
-
-              <p className="text-base text-[#6E6E73] leading-relaxed max-w-xl font-normal">
-                {novel.synopsis || novel.description || 'No public description committed.'}
-              </p>
-
-              <div className="text-xs font-medium text-[#6E6E73] pt-2">
-                <span className="flex items-center justify-center md:justify-start gap-1.5">
-                  <Icons.Book className="w-4 h-4 text-[#8E8E93]"/> {chapters.length} Chapters published
-                </span>
-              </div>
-            </div>
-          </header>
-
-          {/* Table of Contents Container */}
-          <section className="max-w-2xl mx-auto py-16">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-[#6E6E73] mb-6 text-center">Table of Contents</h3>
-
-            {chapters.length === 0 ? (
-              <div className="text-center text-sm font-medium text-[#6E6E73] italic py-8 border border-dashed border-[#E5E5EA] rounded-2xl bg-white">
-                This author hasn't launched any chapters live yet.
-              </div>
-            ) : (
-              <div className="space-y-2.5 max-w-md mx-auto mb-12">
-                {chapters.map((chap, idx) => (
-                  <button
-                    key={chap.id}
-                    onClick={() => { setCurrentChapterIndex(idx); setIsReading(true); }}
-                    className="w-full px-5 py-3.5 bg-white border border-[#E5E5EA] hover:border-[#4B3869] text-left transition-all rounded-xl font-medium text-sm text-[#1D1D1F] flex justify-between items-center group shadow-sm"
-                  >
-                    <span className="group-hover:text-[#4B3869] transition-colors">{chap.title}</span>
-                    <span className="text-[10px] text-[#6E6E73] font-bold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity">Read →</span>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {chapters.length > 0 && (
-              <div className="flex justify-center border-t border-[#E5E5EA] pt-10">
-                <button 
-                  onClick={() => { setCurrentChapterIndex(0); setIsReading(true); }}
-                  className="px-8 py-4 bg-[#1D1D1F] text-white rounded-full font-medium text-sm tracking-wide shadow-md hover:bg-[#4B3869] transition-colors"
-                >
-                  Start Reading Now
-                </button>
-              </div>
-            )}
-          </section>
+  if (activeChapter)
+    return (
+      <div className={`nf-public pf-reader ${night ? "pf-reader-night" : ""}`}>
+        <a className="pf-skip" href="#reading-main">
+          Skip to chapter
+        </a>
+        <header className="pf-reader-header">
+          <Link to="/" className="pf-reader-brand" aria-label="NovelForge home">
+            <Feather size={23} />
+          </Link>
+          <button
+            className="pf-reader-return"
+            aria-label="Back to story"
+            onClick={() => setParams({})}
+          >
+            <ArrowLeft size={16} />
+            <span>Back to story</span>
+          </button>
+          <span className="pf-reader-story-title">
+            {novel.title.replaceAll("_", " ")}
+          </span>
+          <span className="pf-reader-count">
+            {chapterIndex + 1} / {chapters.length}
+          </span>
+        </header>
+        <div className="pf-reading-progress">
+          <progress
+            value={chapterIndex + 1}
+            max={chapters.length}
+            aria-label={`Chapter ${chapterIndex + 1} of ${chapters.length}`}
+          />
         </div>
-      ) : (
-        /* --- HIGH CONTRAST IMMERSIVE READER MODE --- */
-        <div className="bg-white min-h-screen">
-          <div className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-md border-b border-[#E5E5EA] px-6 py-4">
-            <div className="max-w-2xl mx-auto flex items-center justify-between">
-              <button 
-                onClick={() => setIsReading(false)}
-                className="text-xs font-medium text-[#6E6E73] hover:text-[#1D1D1F] flex items-center gap-1.5"
+        <main className="pf-reading-canvas" id="reading-main" tabIndex={-1}>
+          <div className="pf-reading-tools">
+            <span>CHAPTER {String(chapterIndex + 1).padStart(2, "0")}</span>
+            <div>
+              <button
+                onClick={() => setFontSize((value) => Math.max(17, value - 1))}
+                disabled={fontSize <= 17}
+                aria-label="Decrease reading text size"
               >
-                ← Exit
+                A−
               </button>
-              <span className="text-xs font-semibold text-[#1D1D1F] truncate max-w-[200px] capitalize">{novel.title}</span>
-              <div className="text-xs font-medium text-[#6E6E73]">
-                {currentChapterIndex + 1} / {chapters.length}
-              </div>
+              <button
+                onClick={() => setFontSize((value) => Math.min(26, value + 1))}
+                disabled={fontSize >= 26}
+                aria-label="Increase reading text size"
+              >
+                A+
+              </button>
+              <button
+                onClick={() => setNight((value) => !value)}
+                aria-label={
+                  night ? "Use paper reading theme" : "Use night reading theme"
+                }
+              >
+                {night ? <Sun size={17} /> : <Moon size={17} />}
+              </button>
             </div>
           </div>
-
-          <main className="max-w-2xl mx-auto px-6 py-20">
-            {activeChapter ? (
-              <article className="prose prose-neutral mx-auto">
-                <div className="text-center mb-16">
-                  <h2 className="text-3xl font-semibold text-[#1D1D1F] mb-3 capitalize">{activeChapter.title}</h2>
-                  <div className="w-8 h-0.5 bg-[#4B3869] mx-auto rounded-full" />
-                </div>
-                
-                {/* Clean serif text container for reading fatigue prevention */}
-                <div 
-                  className="whitespace-pre-wrap font-serif text-[#1D1D1F] text-lg sm:text-xl leading-[2.1] tracking-normal"
-                  style={{ fontFamily: 'Georgia, Cambria, "Times New Roman", Times, serif' }}
-                >
-                  {activeChapter.content || "This segment details empty structural context pages."}
-                </div>
-              </article>
-            ) : (
-              <div className="text-center text-[#6E6E73] font-medium py-12">No active reading target parsed.</div>
-            )}
-
-            {/* Reader Controls Footer */}
-            <div className="mt-24 pt-10 border-t border-[#E5E5EA] flex items-center justify-between">
-              <button 
-                disabled={currentChapterIndex === 0}
-                onClick={() => setCurrentChapterIndex(prev => prev - 1)}
-                className={`text-sm font-medium ${currentChapterIndex === 0 ? 'text-[#D1D1D6] cursor-not-allowed' : 'text-[#1D1D1F] hover:text-[#4B3869]'}`}
-              >
-                ← Previous
-              </button>
-              
-              <button 
-                onClick={() => {
-                  if (currentChapterIndex < chapters.length - 1) {
-                    setCurrentChapterIndex(prev => prev + 1);
-                  } else {
-                    setIsReading(false);
-                  }
+          <h1 ref={readerHeading} tabIndex={-1}>
+            {activeChapter.title}
+          </h1>
+          <div className="pf-reading-ornament" aria-hidden="true">
+            ✧
+          </div>
+          <div className="pf-reading-prose" style={{ fontSize }}>
+            {activeChapter.content?.startsWith(RICH_PREFIX) ? (
+              <div
+                className="pf-rich-prose"
+                dangerouslySetInnerHTML={{
+                  __html: cleanHTML(
+                    activeChapter.content.slice(RICH_PREFIX.length),
+                  ),
                 }}
-                className="bg-[#1D1D1F] hover:bg-[#4B3869] text-white px-6 py-3 rounded-full font-medium text-xs tracking-wide transition-colors"
+              />
+            ) : (
+              activeChapter.content ||
+              "This published chapter doesn’t contain any text yet."
+            )}
+          </div>
+          {libraryError && <p role="alert">{libraryError}</p>}
+          <nav
+            className="pf-chapter-navigation"
+            aria-label="Chapter navigation"
+          >
+            <button
+              className="pf-inline-link"
+              onClick={() => openChapter(chapters[chapterIndex - 1])}
+              disabled={chapterIndex === 0}
+            >
+              <ArrowLeft size={17} />
+              Previous chapter
+            </button>
+            {chapterIndex < chapters.length - 1 ? (
+              <button
+                className="pf-button pf-button-gold"
+                onClick={() => openChapter(chapters[chapterIndex + 1])}
               >
-                {currentChapterIndex === chapters.length - 1 ? 'Finish Reading' : 'Next Chapter →'} 
+                Next chapter
+                <ArrowRight size={17} />
               </button>
-            </div>
-          </main>
-        </div>
-      )}
-    </div>
-  );
-};
+            ) : (
+              <button
+                className="pf-button pf-button-gold"
+                onClick={() => setParams({})}
+              >
+                Back to the story
+                <Check size={17} />
+              </button>
+            )}
+          </nav>
+          <span className="pf-reader-endnote">
+            {chapterIndex === chapters.length - 1
+              ? "You’re up to date with this story."
+              : "There is always another page."}
+          </span>
+          <div className="pf-reader-jump">
+            <label htmlFor="reader-chapter">Jump to a chapter</label>
+            <select
+              id="reader-chapter"
+              value={chapterId}
+              onChange={(event) => setParams({ chapter: event.target.value })}
+            >
+              {chapters.map((chapter, index) => (
+                <option key={chapter.id} value={chapter.id}>
+                  {index + 1}. {chapter.title}
+                </option>
+              ))}
+            </select>
+          </div>
+        </main>
+      </div>
+    );
 
-export default ReadPage;
+  const artwork = worldArtwork(novel);
+  return (
+    <PublicLayout className="pf-story-page" tone="world" footer={false}>
+      <section className="pf-story-world" aria-labelledby="story-title">
+        <div className="pf-story-environment" aria-hidden="true">
+          {artwork && (
+            <Motion.img
+              src={artwork}
+              alt=""
+              initial={reduceMotion ? false : { scale: 1.035, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.65, ease: "easeOut" }}
+              onError={(event) => {
+                event.currentTarget.style.display = "none";
+              }}
+            />
+          )}
+        </div>
+        <div className="pf-container pf-story-world-inner">
+          <Link className="pf-story-back" to="/explore">
+            <ArrowLeft size={16} />
+            Back to the bookshelf
+          </Link>
+          <Motion.div
+            className="pf-story-entrance"
+            initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45 }}
+          >
+            <div className="pf-story-world-copy">
+              <span className="pf-kicker">
+                {genreLabel(novel.genre) || "Fiction"}
+                <span className="pf-world-dot" />
+                {novel.status || "Published"}
+              </span>
+              <h1 id="story-title">{novel.title.replaceAll("_", " ")}</h1>
+              <AuthorLink novel={novel} prefix />
+              <SaveBook novel={novel} />
+              <p>
+                {novel.description ||
+                  novel.synopsis ||
+                  "Every story is a doorway. Step through this one."}
+              </p>
+              <div className="pf-story-world-actions">
+                {chapters.length > 0 ? (
+                  <button
+                    className="pf-button pf-button-gold"
+                    onClick={() => openChapter(resumeChapter || chapters[0])}
+                  >
+                    {resumeChapter ? "Continue reading" : "Start reading"}
+                    <BookOpen size={18} />
+                  </button>
+                ) : (
+                  <span className="pf-chapters-coming">
+                    Chapters are on their way.
+                  </span>
+                )}
+                <a className="pf-story-chapters-link" href="#story-chapters">
+                  {chapters.length} published{" "}
+                  {chapters.length === 1 ? "chapter" : "chapters"}
+                  <ChevronDown size={15} />
+                </a>
+              </div>
+            </div>
+            <div className="pf-world-book">
+              <BookCover novel={novel} decorative eager />
+              <span>Leave the ordinary behind.</span>
+            </div>
+          </Motion.div>
+          <span className="pf-story-threshold">ONE COVER. ANOTHER WORLD.</span>
+        </div>
+      </section>
+      <div className="pf-container pf-story-details">
+        <section className="pf-story-about">
+          <span className="pf-kicker">BETWEEN THESE PAGES</span>
+          <h2>
+            A world <em>worth knowing.</em>
+          </h2>
+          <p>
+            {novel.synopsis ||
+              novel.description ||
+              "This author is keeping the premise a mystery. Open the first chapter and discover the story for yourself."}
+          </p>
+        </section>
+        <aside className="pf-story-colophon">
+          <Feather size={23} strokeWidth={1.3} />
+          <dl>
+            <div>
+              <dt>Written by</dt>
+              <dd>
+                <AuthorLink novel={novel} />
+              </dd>
+            </div>
+            <div>
+              <dt>On the shelf</dt>
+              <dd>{genreLabel(novel.genre) || "Fiction"}</dd>
+            </div>
+            <div>
+              <dt>Chapters published</dt>
+              <dd>{chapters.length}</dd>
+            </div>
+            {novel.is_mature && (
+              <div>
+                <dt>Content note</dt>
+                <dd>Mature themes</dd>
+              </div>
+            )}
+          </dl>
+        </aside>
+      </div>
+      <section
+        className="pf-container pf-table-of-contents"
+        id="story-chapters"
+      >
+        <SectionHeading
+          eyebrow="THE PATH THROUGH THIS WORLD"
+          title={
+            <>
+              A chapter at <em>a time.</em>
+            </>
+          }
+        >
+          <span className="pf-muted">{chapters.length} published</span>
+        </SectionHeading>
+        {chapters.length ? (
+          <ol>
+            {chapters.map((chapter, index) => (
+              <li key={chapter.id}>
+                <button onClick={() => openChapter(chapter)}>
+                  <span className="pf-chapter-number">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <span className="pf-chapter-title">{chapter.title}</span>
+                  <span className="pf-chapter-length">
+                    {Math.max(
+                      1,
+                      Math.ceil(
+                        (chapter.content || "")
+                          .trim()
+                          .split(/\s+/)
+                          .filter(Boolean).length / 200,
+                      ),
+                    )}{" "}
+                    min read
+                  </span>
+                  <ArrowRight size={20} />
+                </button>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <div className="pf-chapter-empty">
+            <BookOpen size={26} />
+            <h3>A little anticipation.</h3>
+            <p>
+              The author hasn’t published any chapters yet. There are other
+              stories to explore while this one takes shape.
+            </p>
+            <Link className="pf-inline-link" to="/explore">
+              Return to the bookshelf
+              <ArrowRight size={17} />
+            </Link>
+          </div>
+        )}
+      </section>
+      <div className="pf-container pf-story-afterword">
+        <span className="pf-kicker">THE NEXT WORLD COULD BE YOURS.</span>
+        <p>
+          Some stories are found.
+          <br />
+          <em>Some are waiting to be written.</em>
+        </p>
+        <Link className="pf-button pf-button-quiet" to="/write">
+          Write your own beginning
+          <ArrowRight size={17} />
+        </Link>
+      </div>
+      <PublicFooter />
+    </PublicLayout>
+  );
+}
+
+export default function ReadPage() {
+  const { id } = useParams();
+  if (!id)
+    return (
+      <PublicLayout>
+        <PublicState title="Choose a world to step into.">
+          Find a story on the bookshelf, then make yourself at home between its
+          pages.
+        </PublicState>
+      </PublicLayout>
+    );
+  return <StoryPage key={id} id={id} />;
+}

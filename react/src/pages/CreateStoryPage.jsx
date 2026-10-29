@@ -1,191 +1,135 @@
-import React, { useState, useContext } from "react";
-import { useNavigate } from "react-router-dom";
-import Navbar from "../components/Navbar";
-import { AuthContext } from "../context/AuthContext";
-import { supabase } from "../lib/supabaseClient";
-
-const CreateStoryPage = () => {
+import { useContext, useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { Feather, ArrowRight } from "lucide-react";
+import { AuthContext } from "../context/AuthState";
+import { StudioClientContext } from "../lib/studioData";
+import { StudioHeading, StudioError } from "../components/studio/StudioPieces";
+export default function CreateStoryPage() {
   const navigate = useNavigate();
-  const { user, loading } = useContext(AuthContext);
-
-  // Form Field States
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState(""); 
-  const [synopsis, setSynopsis] = useState(""); 
-  const [genre, setGenre] = useState("Fantasy");
-  const [isMature, setIsMature] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState(null);
-
-  // Enforce Route Protection
-  if (!loading && !user) {
-    navigate("/auth");
-    return null;
-  }
-
-  const handleCreateStory = async (e) => {
+  const { user } = useContext(AuthContext);
+  const client = useContext(StudioClientContext);
+  const [title, setTitle] = useState(""),
+    [description, setDescription] = useState(""),
+    [synopsis, setSynopsis] = useState(""),
+    [genre, setGenre] = useState("Fantasy"),
+    [mature, setMature] = useState(false),
+    [busy, setBusy] = useState(false),
+    [error, setError] = useState("");
+  const create = async (e) => {
     e.preventDefault();
-    if (!title.trim() || submitting) return;
-
-    setSubmitting(true);
-    setError(null);
-
+    if (!title.trim() || busy) return;
+    setBusy(true);
+    setError("");
     try {
-      // ⚡ FIX: Shifted target pointer from user_id to author_id to match dashboard schemas perfectly
-      const { data, error: dbError } = await supabase
+      const { data, error } = await client
         .from("novels")
         .insert([
           {
             title: title.trim(),
             description: description.trim(),
             synopsis: synopsis.trim(),
-            genre: genre,
-            is_mature: isMature,
-            user_id: user.id, // ⚡ FIXED KEYWAY LINK
-            status: "Draft", 
+            genre,
+            is_mature: mature,
+            user_id: user.id,
+            status: "Draft",
           },
         ])
         .select()
         .single();
-
-      if (dbError) throw dbError;
-
-      // ⚡ PEAK UX OPTIMIZATION: Instead of bouncing backward to a list view, 
-      // safely drop them directly into the unique manuscript workspace editor node if it resolves!
-      if (data && data.id) {
-        navigate(`/write/edit/${data.id}`);
-      } else {
-        navigate("/write");
-      }
+      if (error) throw error;
+      if (!data) throw new Error("The manuscript could not be created.");
+      navigate(`/write/edit/${data.id}`);
     } catch (err) {
-      setError(err.message || "Failed to initialize manuscript profile.");
+      setError(err.message);
     } finally {
-      setSubmitting(false);
+      setBusy(false);
     }
   };
-
   return (
-    <div className="min-h-screen bg-white">
-      <Navbar />
-
-      <div className="max-w-3xl mx-auto px-6 py-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
-        <button
-          onClick={() => navigate("/write")}
-          className="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-black mb-8 block transition-colors"
-        >
-          ← Cancel Workspace
-        </button>
-
-        <div className="mb-12">
-          <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2">
-            Forge New Manuscript
-          </h1>
-          <p className="text-gray-500 font-medium">
-            Configure your core settings before generating chapters.
-          </p>
-        </div>
-
-        {error && (
-          <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl text-rose-900 text-sm font-medium mb-8">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleCreateStory} className="space-y-8">
-          {/* Title input */}
-          <div className="group">
-            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 group-focus-within:text-purple-600 transition-colors">
-              Story Title
-            </label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Enter an evocative title..."
-              className="w-full bg-transparent border-b-2 border-gray-100 py-3 text-xl font-bold placeholder:text-gray-300 focus:border-purple-600 focus:outline-none transition-colors"
-              required
-            />
-          </div>
-
-          {/* Genre Selection Dropdown */}
-          <div className="group">
-            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
-              Primary Narrative Genre
-            </label>
-            <select
-              value={genre}
-              onChange={(e) => setGenre(e.target.value)}
-              className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 font-medium text-gray-900 focus:outline-none focus:border-purple-600 transition-all"
-            >
-              <option value="Fantasy">Fantasy</option>
-              <option value="Sci-Fi">Sci-Fi</option>
-              <option value="Mystery">Mystery</option>
-              <option value="Romance">Romance</option>
-              <option value="Thriller">Thriller</option>
-              <option value="Slice of Life">Slice of Life</option>
-            </select>
-          </div>
-
-          {/* One line summary placeholder */}
-          <div className="group">
-            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 group-focus-within:text-purple-600 transition-colors">
-              Short Description / Logline
-            </label>
-            <input
-              type="text"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="A brief hook to capture reader interest (max 150 characters)..."
-              className="w-full bg-transparent border-b-2 border-gray-100 py-3 font-medium placeholder:text-gray-300 focus:border-purple-600 focus:outline-none transition-colors"
-            />
-          </div>
-
-          {/* Core Full Context Synopsis Textarea */}
-          <div className="group">
-            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 group-focus-within:text-purple-600 transition-colors">
-              Extended Book Synopsis
-            </label>
-            <textarea
-              rows={5}
-              value={synopsis}
-              onChange={(e) => setSynopsis(e.target.value)}
-              placeholder="Outline the detailed premise, conflicts, and world dynamics..."
-              className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 font-medium text-gray-900 placeholder:text-gray-300 focus:outline-none focus:border-purple-600 transition-colors resize-none"
-            />
-          </div>
-
-          {/* Mature Flag Content Rating Checklist Selector */}
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
-            <div>
-              <p className="text-sm font-black text-gray-900">
-                Mature Audiences Only (18+)
-              </p>
-              <p className="text-xs text-gray-400 font-medium mt-0.5">
-                Contains explicit violence, language, or themes.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsMature(!isMature)}
-              className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 focus:outline-none ${isMature ? "bg-black" : "bg-gray-200"}`}
-            >
-              <div
-                className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-300 ${isMature ? "translate-x-6" : "translate-x-0"}`}
-              />
-            </button>
-          </div>
-
-          <button
-            type="submit"
-            disabled={submitting || !title.trim()}
-            className="w-full bg-black text-white rounded-2xl py-5 mt-4 font-black text-sm tracking-[0.2em] uppercase shadow-xl hover:bg-purple-700 transition-all active:scale-[0.99] disabled:opacity-50 disabled:pointer-events-none"
+    <div className="studio-page">
+      <Link className="pf-back-link" to="/write">
+        ← All manuscripts
+      </Link>
+      <StudioHeading
+        eyebrow="A NEW POSSIBILITY"
+        title={
+          <>
+            Somewhere, a world <em>begins.</em>
+          </>
+        }
+      />
+      <div className="studio-create-layout">
+        <form className="studio-form" onSubmit={create}>
+          {error && <StudioError>{error}</StudioError>}
+          <label htmlFor="new-title">Manuscript title</label>
+          <input
+            required
+            id="new-title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="A name for this new world…"
+          />
+          <label htmlFor="new-genre">Genre</label>
+          <select
+            id="new-genre"
+            value={genre}
+            onChange={(e) => setGenre(e.target.value)}
           >
-            {submitting ? "Initializing Workspace..." : "Initialize Manuscript"}
+            {[
+              "Fantasy",
+              "Sci-Fi",
+              "Mystery",
+              "Romance",
+              "Thriller",
+              "Slice of Life",
+            ].map((g) => (
+              <option key={g}>{g}</option>
+            ))}
+          </select>
+          <label htmlFor="new-logline">The hook</label>
+          <input
+            id="new-logline"
+            maxLength={150}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="One sentence. A whole possibility."
+          />
+          <label htmlFor="new-synopsis">What’s the story?</label>
+          <textarea
+            id="new-synopsis"
+            value={synopsis}
+            onChange={(e) => setSynopsis(e.target.value)}
+            placeholder="The world, the conflict, the person at its heart. You can change this later."
+          />
+          <label className="studio-mature">
+            <input
+              type="checkbox"
+              checked={mature}
+              onChange={(e) => setMature(e.target.checked)}
+            />{" "}
+            Contains mature themes (18+)
+          </label>
+          <button disabled={busy} className="pf-button pf-button-gold">
+            {busy ? "Creating your desk…" : "Create manuscript"}
+            <ArrowRight size={16} />
           </button>
         </form>
+        <aside className="studio-create-note">
+          <Feather size={32} />
+          <h2>
+            It doesn’t have
+            <br />
+            to be perfect.
+            <br />
+            <em>It has to begin.</em>
+          </h2>
+          <p>
+            A private desk for your chapters, characters, lore and all the
+            things you haven’t figured out yet.
+          </p>
+          <span>Your manuscript starts as a private draft.</span>
+        </aside>
       </div>
     </div>
   );
-};
-
-export default CreateStoryPage;
+}

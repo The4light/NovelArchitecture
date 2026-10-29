@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion as Motion } from 'framer-motion';
 
 const gothicFont = '"Cinzel Decorative", "Cinzel", "Playfair Display", Georgia, serif';
 const sansFont = '"Plus Jakarta Sans", "Inter", system-ui, sans-serif';
@@ -15,7 +15,7 @@ const NovelCard = ({ novel }) => {
   const authorProfile = novel.profiles;
 
   return (
-    <motion.div
+    <Motion.div
       onClick={() => navigate(`/read/${novel.id}`)}
       whileHover={{ y: -10 }}
       transition={{ type: 'spring', stiffness: 240, damping: 22 }}
@@ -23,7 +23,7 @@ const NovelCard = ({ novel }) => {
       style={{ fontFamily: sansFont }}
     >
       {/* COVER — fills the entire card */}
-      <motion.img
+      <Motion.img
         src={novel.thumbnail_url || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=600'}
         alt={novel.title}
         className="absolute inset-0 w-full h-full object-cover"
@@ -43,7 +43,7 @@ const NovelCard = ({ novel }) => {
       </div>
 
       {/* CONTENT — sits on the cover, rises slightly on hover */}
-      <motion.div
+      <Motion.div
         className="absolute bottom-0 left-0 right-0 p-5 space-y-2.5"
         whileHover={{ y: -4 }}
         transition={{ duration: 0.4, ease: EASE }}
@@ -84,8 +84,8 @@ const NovelCard = ({ novel }) => {
             Read →
           </span>
         </div>
-      </motion.div>
-    </motion.div>
+      </Motion.div>
+    </Motion.div>
   );
 };
 

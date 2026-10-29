@@ -5,8 +5,6 @@ import { Icons } from "../Icons";
  * High-Fidelity World-Building Codex Matrix & Scratchpad Panel
  */
 const CodexSidebar = ({
-  isOpen,
-  setIsOpen,
   activeTab,
   setActiveTab,
   isCreatingEntry,

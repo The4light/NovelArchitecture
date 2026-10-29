@@ -1,0 +1,1270 @@
+.nf-workspace {
+  height: 100dvh;
+  position: fixed;
+  inset: 0;
+  background: #f2f1e9;
+  color: #30382a;
+  display: flex;
+  flex-direction: column;
+  font:
+    14px/1.6 Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+.workspace-header {
+  height: 64px;
+  flex-shrink: 0;
+  border-bottom: 1px solid #dddfd1;
+  background: #f9f8f2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 27px;
+  z-index: 90;
+  gap: 20px;
+}
+.workspace-header > div {
+  display: flex;
+  align-items: center;
+  gap: 21px;
+  min-width: 0;
+}
+.workspace-header button {
+  flex-shrink: 0;
+  padding: 7px;
+  color: #79816a;
+}
+.workspace-book-name {
+  font:
+    16px Georgia,
+    serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 50vw;
+}
+.workspace-book-name small {
+  display: block;
+  font: 9px/1.5 sans-serif;
+  letter-spacing: 0.4px;
+  color: #9b9e8b;
+  margin-top: 3px;
+}
+.workspace-save-status {
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #8b967b;
+  white-space: nowrap;
+}
+.workspace-save-status.has-error {
+  color: #a75335;
+}
+.workspace-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+.workspace-sidebar {
+  width: 235px;
+  flex-shrink: 0;
+  border-right: 1px solid #dddfd0;
+  background: #ebede2;
+  overflow: auto;
+  padding: 24px 17px;
+  display: flex;
+  flex-direction: column;
+  transition:
+    width 0.2s,
+    padding 0.2s;
+}
+.workspace-back {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  color: #8d947f;
+  padding: 0 8px;
+}
+.workspace-sidebar-book {
+  padding: 27px 12px 22px;
+  border-bottom: 1px solid #d8dccb;
+  margin-bottom: 18px;
+}
+.workspace-sidebar-book > div {
+  width: 65px;
+  transform: rotate(-4deg);
+  box-shadow: 5px 5px 8px #363e2322;
+  margin-bottom: 20px;
+}
+.workspace-sidebar-book h2 {
+  font:
+    23px/1.15 Georgia,
+    serif;
+  margin: 0 0 8px;
+  overflow-wrap: anywhere;
+}
+.workspace-sidebar-book > span {
+  font-size: 9px;
+  color: #939b82;
+}
+.workspace-sidebar nav {
+  display: grid;
+  gap: 2px;
+}
+.workspace-sidebar nav > button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  border-radius: 5px;
+  font-size: 12px;
+  color: #7e8a6a;
+  text-align: left;
+}
+.workspace-sidebar nav > button[aria-current="page"] {
+  background: #dfe4d2;
+  color: #48593a;
+}
+.workspace-sidebar nav small {
+  margin-left: auto;
+  font-size: 10px;
+}
+.workspace-sidebar-foot {
+  font:
+    italic 12px Georgia,
+    serif;
+  color: #a0a68f;
+  padding: 40px 12px 5px;
+  margin-top: auto;
+}
+.workspace-main {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  position: relative;
+}
+.workspace-main > .studio-error {
+  margin: 16px 25px;
+}
+.workspace-desk {
+  max-width: 1280px;
+  padding: 45px 50px 70px;
+  margin: auto;
+}
+.workspace-desk-heading {
+  padding: 0 0 35px;
+  border-bottom: 1px solid #dcdfd0;
+  position: relative;
+}
+.workspace-desk h1,
+.workspace-content h1 {
+  font:
+    clamp(36px, 4vw, 57px)/1.1 Georgia,
+    serif;
+  letter-spacing: -1.5px;
+  margin: 15px 0 20px;
+  overflow-wrap: anywhere;
+}
+.workspace-desk-heading p {
+  font: 14px/1.9 sans-serif;
+  color: #8a947c;
+  max-width: 580px;
+  margin-bottom: 23px;
+}
+.workspace-desk-heading .pf-button {
+  font-size: 11px;
+  min-height: 40px;
+  padding: 12px 17px;
+}
+.workspace-desk-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  margin: 35px 0 45px;
+}
+.workspace-desk-grid h2 {
+  font:
+    26px Georgia,
+    serif;
+  margin: 10px 0 23px;
+}
+.workspace-outline > button {
+  display: flex;
+  text-align: left;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 16px 0;
+  border-bottom: 1px solid #dce0ce;
+}
+.workspace-outline > button > span:first-child {
+  font:
+    18px Georgia,
+    serif;
+  color: #a4ab92;
+}
+.workspace-outline > button > span:nth-child(2) {
+  font-size: 12px;
+}
+.workspace-outline small {
+  display: block;
+  font-size: 9px;
+  color: #9ba38b;
+  margin-top: 5px;
+}
+.workspace-outline > button > svg:last-child {
+  margin-left: auto;
+  color: #9ca78a;
+}
+.workspace-outline > button.workspace-outline-add {
+  color: #89936e;
+  font-size: 11px;
+  gap: 9px;
+}
+.workspace-fragment {
+  display: flex;
+  align-items: flex-start;
+  text-align: left;
+  gap: 16px;
+  padding: 17px;
+  background: #f7f6ef;
+  border: 1px solid #dfe2d3;
+  margin: 12px 0;
+  width: 100%;
+  box-shadow: 1px 4px 5px #30392005;
+  transform: rotate(-0.6deg);
+  border-radius: 3px;
+}
+.workspace-fragment:nth-child(even) {
+  transform: rotate(0.5deg);
+  margin-left: 6px;
+  width: calc(100% - 6px);
+}
+.workspace-fragment > span:first-child {
+  width: 45px;
+  height: 51px;
+  display: grid;
+  place-items: center;
+  background: #e7e8dc;
+  color: #909c79;
+  flex-shrink: 0;
+}
+.workspace-fragment small {
+  font-size: 8px;
+  letter-spacing: 1.3px;
+  text-transform: uppercase;
+  color: #a6ab96;
+}
+.workspace-fragment strong {
+  display: block;
+  font:
+    19px Georgia,
+    serif;
+  margin: 4px 0;
+}
+.workspace-fragment p {
+  font-size: 11px;
+  color: #9a9f8b;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  margin: 5px 0 0;
+}
+.workspace-desk-fragments .pf-inline-link {
+  font-size: 11px;
+  margin-top: 12px;
+}
+.workspace-notes-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 25px;
+  gap: 15px;
+}
+.workspace-notes-heading h2 {
+  font:
+    27px Georgia,
+    serif;
+}
+.workspace-notes-heading button {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 11px;
+  color: #879272;
+}
+.workspace-pinned-notes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 28px;
+  padding: 8px 5px 24px;
+  align-items: start;
+}
+.workspace-paper-note {
+  background: linear-gradient(125deg, #f3edce, #eee6c7);
+  color: #797b55;
+  transform: rotate(var(--note-rotation, -1.5deg));
+  box-shadow:
+    2px 6px 9px #3039200e,
+    0 1px 1px #30392012;
+  padding: 24px 22px;
+  min-height: 210px;
+  text-align: left;
+  border-radius: 2px;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+  position: relative;
+}
+.workspace-paper-note:nth-child(even) {
+  background: linear-gradient(125deg, #e5e8d7, #dce2c7);
+}
+.workspace-paper-note:hover {
+  transform: rotate(0) translateY(-3px);
+  box-shadow: 3px 9px 13px #30392015;
+}
+.workspace-paper-note h3,
+.workspace-paper-note h2 {
+  font:
+    23px/1.2 Georgia,
+    serif;
+  margin: 12px 0;
+}
+.workspace-paper-note p {
+  font:
+    12px/1.9 Georgia,
+    serif;
+  white-space: pre-wrap;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  overflow: hidden;
+}
+.workspace-note-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #a2a17e;
+  background: #ebe8d5 !important;
+  border: 1px dashed #d7d4b9;
+  box-shadow: none;
+}
+.workspace-note-empty p {
+  font:
+    21px/1.4 Georgia,
+    serif;
+}
+.workspace-content {
+  padding: 45px 50px 70px;
+  max-width: 1200px;
+  margin: auto;
+}
+.workspace-view-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 25px;
+}
+.workspace-view-heading .pf-button {
+  white-space: nowrap;
+  font-size: 11px;
+}
+.workspace-codex-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 25px;
+  margin-top: 35px;
+}
+.workspace-codex-card {
+  background: #f9f8f1;
+  border: 1px solid #dfe2d2;
+  border-radius: 3px;
+  overflow: hidden;
+  box-shadow: 1px 4px 7px #30392005;
+}
+.workspace-codex-card > img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+}
+.workspace-entry-mark {
+  display: grid;
+  place-items: center;
+  background: radial-gradient(ellipse, #e2e7d2, #eceee3);
+  font:
+    62px Georgia,
+    serif;
+  color: #b7bea2;
+  height: 140px;
+}
+.workspace-codex-card > button {
+  padding: 22px;
+  text-align: left;
+  width: 100%;
+}
+.workspace-codex-card h2 {
+  font:
+    25px Georgia,
+    serif;
+  margin: 10px 0;
+}
+.workspace-codex-card p {
+  font-size: 12px;
+  color: #8e987d;
+  line-height: 1.8;
+}
+.workspace-entry-excerpt {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+  white-space: pre-wrap;
+}
+.workspace-paper-note .workspace-entry-mark {
+  display: none;
+}
+.workspace-paper-note > button:first-of-type {
+  text-align: left;
+  width: 100%;
+}
+.workspace-paper-note .pf-kicker {
+  font-size: 8px;
+}
+.workspace-float-toggle {
+  font-size: 10px;
+  margin-top: 14px;
+  display: block;
+  text-decoration: underline;
+}
+.workspace-chapter-list {
+  margin: 30px 0;
+}
+.workspace-chapter-list > button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  gap: 25px;
+  border-bottom: 1px solid #dfe2d1;
+  padding: 22px 0;
+}
+.workspace-chapter-list > button > span {
+  font:
+    24px Georgia,
+    serif;
+  color: #b1b89f;
+}
+.workspace-chapter-list h2 {
+  font:
+    24px Georgia,
+    serif;
+  margin: 0 0 5px;
+}
+.workspace-chapter-list small {
+  font-size: 10px;
+  color: #9ca68b;
+}
+.workspace-chapter-list svg {
+  margin-left: auto;
+  color: #96a17f;
+}
+.workspace-chapter-nav {
+  border-top: 1px solid #d6dcc7;
+  margin-top: 22px;
+  padding-top: 17px;
+}
+.workspace-chapter-search {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #a1ab8b;
+  margin: 0 6px 10px;
+}
+.workspace-chapter-search input {
+  width: 100%;
+  min-width: 0;
+  background: transparent;
+  font-size: 10px;
+  outline: none;
+  padding: 6px;
+}
+.workspace-chapter-nav > button {
+  display: flex;
+  gap: 9px;
+  text-align: left;
+  align-items: flex-start;
+  width: 100%;
+  padding: 11px 9px;
+  font-size: 11px;
+  border-radius: 4px;
+  color: #7d8968;
+}
+.workspace-chapter-nav > button > span:first-child {
+  font:
+    14px Georgia,
+    serif;
+  color: #b1b99f;
+}
+.workspace-chapter-nav small {
+  display: block;
+  font-size: 8px;
+  color: #a4ae91;
+  margin-top: 4px;
+}
+.workspace-chapter-nav > button[aria-current="page"] {
+  background: #e0e5d3;
+}
+.workspace-chapter-nav .workspace-add-chapter {
+  border-top: 1px solid #d9dfca;
+  border-radius: 0;
+  margin-top: 14px;
+  align-items: center;
+}
+.workspace-focus .workspace-sidebar {
+  width: 0;
+  padding-inline: 0;
+  border: 0;
+  overflow: hidden;
+}
+.workspace-focus .workspace-header {
+  background: #f2f1e9;
+  border-color: transparent;
+}
+.workspace-focus .workspace-header .workspace-book-name small {
+  display: none;
+}
+.workspace-focus .workspace-brand {
+  display: none;
+}
+.workspace-focus .workspace-publish-chapter {
+  display: none;
+}
+.workspace-focus .writing-surface {
+  max-width: 920px;
+}
+.writing-surface {
+  max-width: 1100px;
+  margin: auto;
+  padding: 24px 38px 70px;
+}
+.writing-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 9px 10px;
+  background: #faf9f4;
+  border: 1px solid #e0e2d4;
+  border-radius: 6px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 4px 8px #30392005;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.writing-toolbar button {
+  padding: 7px;
+  color: #788668;
+  flex-shrink: 0;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+}
+.writing-toolbar button:hover,
+.writing-toolbar button[aria-pressed="true"] {
+  background: #e6e8d8;
+  color: #58693e;
+}
+.writing-toolbar select {
+  font-size: 11px;
+  padding: 5px 9px 5px 2px;
+  max-width: 110px;
+  color: #778368;
+  flex-shrink: 0;
+  outline: none;
+  background: transparent;
+}
+.writing-paper {
+  background: #fffefa;
+  border: 1px solid #e1e2d5;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px #30392003;
+  padding: 50px clamp(25px, 5vw, 75px) 100px;
+  margin-top: 19px;
+  min-height: calc(100dvh - 240px);
+}
+.writing-paper > .pf-kicker {
+  font-size: 9px;
+  color: #b1b99e;
+}
+.writing-chapter-title {
+  font:
+    clamp(28px, 3vw, 40px)/1.2 Georgia,
+    serif;
+  color: #3d4930;
+  width: 100%;
+  outline: none;
+  margin: 18px 0 22px;
+  background: transparent;
+}
+.writing-ornament {
+  font:
+    25px Georgia,
+    serif;
+  color: #c4c5a8;
+  margin-bottom: 25px;
+}
+.writing-prose {
+  font:
+    18px/1.95 Georgia,
+    serif;
+  outline: none;
+  min-height: 350px;
+  color: #4e5742;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.writing-prose p,
+.writing-prose div {
+  margin: 0 0 1em;
+}
+.writing-prose blockquote {
+  border-left: 2px solid #d1d8bd;
+  padding-left: 22px;
+  color: #8c967b;
+  font-style: italic;
+  margin: 20px 0;
+}
+.writing-prose ul,
+.writing-prose ol {
+  padding-left: 24px;
+  list-style: revert;
+}
+.writing-prose h2 {
+  font:
+    30px Georgia,
+    serif;
+  margin: 25px 0 17px;
+}
+.writing-prose h3 {
+  font:
+    23px Georgia,
+    serif;
+  margin: 22px 0 15px;
+}
+.writing-prose a {
+  color: #9e7b36;
+  text-decoration: underline;
+}
+.writing-prose hr {
+  border: 0;
+  border-top: 1px solid #c6ccb6;
+  margin: 30px 0;
+}
+.writing-count {
+  display: flex;
+  gap: 20px;
+  color: #a0a98d;
+  font-size: 9px;
+  padding: 15px 5px;
+}
+.writing-count > span:last-child {
+  margin-left: auto;
+  font:
+    italic 11px Georgia,
+    serif;
+}
+.writing-link-form {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  padding: 15px;
+  background: #e7ebdc;
+}
+.writing-link-form label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex: 1;
+}
+.writing-link-form input {
+  background: #fffdf5;
+  padding: 7px;
+  width: 100%;
+  min-width: 0;
+}
+.workspace-publish-chapter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  color: #8a9777;
+  margin: 0 auto 30px;
+  border-bottom: 1px solid #ccd5bd;
+  padding: 8px;
+}
+.workspace-recovery {
+  background: #e5ead8;
+  color: #7b8867;
+  padding: 10px 25px;
+  font-size: 11px;
+}
+.workspace-publishing > p {
+  max-width: 600px;
+  color: #8d977d;
+  font-size: 13px;
+  line-height: 1.9;
+}
+.workspace-publication-summary {
+  display: flex;
+  gap: 30px;
+  background: #e7eada;
+  border: 1px solid #d9dfc8;
+  border-radius: 6px;
+  padding: 30px;
+  margin: 30px 0;
+}
+.workspace-publication-summary > .pf-book {
+  width: 120px;
+  flex-shrink: 0;
+}
+.workspace-publication-summary h2 {
+  font:
+    30px Georgia,
+    serif;
+}
+.workspace-publication-summary p {
+  font-size: 12px;
+  color: #8b9779;
+}
+.workspace-publishing > h2 {
+  font:
+    27px Georgia,
+    serif;
+  margin-top: 40px;
+}
+.workspace-publishing-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  justify-content: space-between;
+  padding: 17px 0;
+  border-bottom: 1px solid #dde3cf;
+  font-size: 12px;
+}
+.workspace-publishing-row small {
+  display: block;
+  font-size: 9px;
+  color: #a7b094;
+}
+.workspace-publishing-row button {
+  font-size: 10px;
+  color: #8a9877;
+}
+.workspace-dialog-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  justify-content: space-between;
+}
+.workspace-dialog-heading h2 {
+  font-size: 28px;
+}
+.nf-workspace .studio-modal {
+  max-height: 90dvh;
+  overflow: auto;
+}
+.nf-workspace .studio-form label {
+  margin-top: 15px;
+}
+.nf-workspace .studio-form textarea {
+  min-height: 160px;
+}
+.nf-workspace .studio-form .pf-button {
+  font-size: 12px;
+  padding: 12px 18px;
+}
+.workspace-scrim {
+  display: none;
+}
+.floating-paper {
+  position: fixed;
+  z-index: 100;
+  background: linear-gradient(110deg, #f5efd6, #eee4be);
+  box-shadow:
+    2px 7px 13px #433b251c,
+    1px 2px 3px #433b2512;
+  transform: rotate(var(--note-rotation));
+  border: 1px solid #e4dab4;
+  border-radius: 3px;
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+.floating-paper:focus-within {
+  z-index: 110;
+  box-shadow: 3px 10px 17px #433b2524;
+}
+.floating-paper-grip {
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  color: #b2a77e;
+  cursor: grab;
+  touch-action: none;
+  background: #e5d7a322;
+  border-bottom: 1px solid #dccc9b44;
+}
+.floating-paper-grip:active {
+  cursor: grabbing;
+}
+.floating-paper-grip button {
+  padding: 4px;
+}
+.floating-paper > input {
+  display: block;
+  font:
+    21px Georgia,
+    serif;
+  width: 100%;
+  padding: 18px 19px 9px;
+  background: transparent;
+  outline: none;
+  color: #81764f;
+}
+.floating-paper > textarea {
+  width: 100%;
+  font:
+    14px/1.8 Georgia,
+    serif;
+  padding: 5px 19px 15px;
+  height: 153px;
+  resize: none;
+  background: transparent;
+  outline: none;
+  color: #8b805d;
+}
+.floating-paper > small {
+  display: block;
+  font-size: 8px;
+  letter-spacing: 0.3px;
+  color: #b4a77e;
+  padding: 0 18px 12px;
+}
+.floating-paper > small button {
+  color: #a55d3c;
+}
+.nf-workspace .studio-form input,
+.nf-workspace .studio-form textarea {
+  font-family: inherit;
+}
+@media (min-width: 1500px) {
+  .workspace-sidebar {
+    width: 255px;
+  }
+  .writing-paper {
+    padding-inline: 95px;
+  }
+}
+@media (max-width: 1100px) {
+  .workspace-sidebar {
+    width: 210px;
+    padding: 22px 12px;
+  }
+  .workspace-desk,
+  .workspace-content {
+    padding: 35px 30px 60px;
+  }
+  .workspace-desk-grid {
+    gap: 25px;
+  }
+  .workspace-pinned-notes {
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  .workspace-codex-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .writing-surface {
+    padding: 19px 25px 45px;
+  }
+  .writing-paper {
+    padding: 35px 40px 80px;
+  }
+  .workspace-view-heading {
+    display: block;
+  }
+  .workspace-view-heading > .pf-button {
+    margin: 0 0 20px;
+  }
+  .workspace-desk-grid {
+    grid-template-columns: 1fr;
+  }
+  .workspace-desk-fragments > div {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+  }
+  .workspace-fragment:nth-child(even) {
+    width: 100%;
+    margin-left: 0;
+  }
+  .writing-count > span:last-child {
+    display: none;
+  }
+}
+@media (max-width: 767px) {
+  .workspace-header {
+    height: 61px;
+    padding: 0 16px;
+    gap: 10px;
+  }
+  .workspace-header > div {
+    gap: 8px;
+  }
+  .workspace-header .workspace-brand {
+    display: none;
+  }
+  .workspace-book-name {
+    font-size: 15px;
+    max-width: 49vw;
+  }
+  .workspace-book-name small {
+    font-size: 8px;
+  }
+  .workspace-save-status {
+    font-size: 9px;
+  }
+  .workspace-header button {
+    padding: 7px;
+  }
+  .workspace-sidebar {
+    position: fixed;
+    z-index: 85;
+    top: 61px;
+    bottom: 0;
+    left: 0;
+    transform: translateX(-100%);
+    width: 260px;
+    transition: transform 0.2s;
+    padding: 25px 17px;
+  }
+  .workspace-sidebar.is-open,
+  .workspace-focus .workspace-sidebar.is-open {
+    transform: translateX(0);
+    width: 260px;
+    padding: 25px 17px;
+    overflow: auto;
+  }
+  .workspace-scrim {
+    display: block;
+    position: fixed;
+    inset: 61px 0 0;
+    background: #303b2455;
+    backdrop-filter: blur(3px);
+    z-index: 84;
+  }
+  .workspace-focus .workspace-sidebar {
+    width: 260px;
+    padding: 25px 17px;
+  }
+  .workspace-main {
+    width: 100%;
+  }
+  .workspace-sidebar-book {
+    padding-top: 20px;
+  }
+  .workspace-sidebar-book > div {
+    width: 55px;
+  }
+  .workspace-desk,
+  .workspace-content {
+    padding: 30px 25px 60px;
+  }
+  .workspace-desk h1,
+  .workspace-content h1 {
+    font-size: 40px;
+  }
+  .workspace-desk-heading p {
+    font-size: 12px;
+  }
+  .workspace-pinned-notes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .workspace-desk-grid {
+    margin-top: 30px;
+    gap: 35px;
+  }
+  .workspace-fragment {
+    gap: 10px;
+    padding: 15px;
+  }
+  .workspace-fragment > span:first-child {
+    width: 36px;
+    height: 45px;
+  }
+  .workspace-fragment strong {
+    font-size: 18px;
+  }
+  .writing-surface {
+    padding: 12px 15px 35px;
+  }
+  .writing-toolbar {
+    gap: 1px;
+    padding: 7px;
+    top: 0;
+    border-radius: 4px;
+  }
+  .writing-toolbar button {
+    padding: 8px;
+  }
+  .writing-paper {
+    padding: 35px 30px 70px;
+    margin-top: 12px;
+    min-height: calc(100dvh - 190px);
+  }
+  .writing-prose {
+    font-size: 18px;
+    line-height: 1.9;
+  }
+  .writing-chapter-title {
+    font-size: 30px;
+  }
+  .writing-count {
+    font-size: 9px;
+    padding-top: 16px;
+    gap: 15px;
+  }
+  .workspace-publication-summary {
+    padding: 23px;
+    gap: 23px;
+  }
+  .workspace-publication-summary > .pf-book {
+    width: 95px;
+  }
+  .workspace-publication-summary h2 {
+    font-size: 24px;
+  }
+  .workspace-publication-summary p {
+    font-size: 11px;
+  }
+  .floating-paper > textarea {
+    height: 130px;
+  }
+  .workspace-focus .writing-paper {
+    padding-top: 28px;
+  }
+  .workspace-publish-chapter {
+    margin-bottom: 22px;
+  }
+  .workspace-codex-grid {
+    gap: 18px;
+  }
+  .workspace-entry-mark {
+    height: 120px;
+  }
+  .workspace-codex-card > button {
+    padding: 17px;
+  }
+  .workspace-codex-card h2 {
+    font-size: 22px;
+  }
+  .workspace-codex-card p {
+    font-size: 11px;
+  }
+}
+@media (max-width: 430px) {
+  .workspace-book-name {
+    max-width: 39vw;
+    font-size: 14px;
+  }
+  .workspace-save-status {
+    max-width: 73px;
+    white-space: normal;
+    text-align: right;
+    line-height: 1.3;
+  }
+  .workspace-header > div {
+    gap: 3px;
+  }
+  .workspace-header {
+    padding-inline: 12px;
+  }
+  .workspace-desk,
+  .workspace-content {
+    padding: 28px 21px 50px;
+  }
+  .workspace-desk h1,
+  .workspace-content h1 {
+    font-size: 36px;
+  }
+  .workspace-desk-fragments > div {
+    grid-template-columns: 1fr;
+  }
+  .workspace-pinned-notes {
+    gap: 19px 15px;
+  }
+  .workspace-paper-note {
+    padding: 19px 16px;
+    min-height: 190px;
+  }
+  .workspace-paper-note h2,
+  .workspace-paper-note h3 {
+    font-size: 21px;
+  }
+  .workspace-paper-note p {
+    font-size: 11px;
+  }
+  .workspace-notes-heading {
+    align-items: flex-start;
+  }
+  .workspace-notes-heading h2 {
+    font-size: 25px;
+    max-width: 170px;
+  }
+  .workspace-notes-heading button {
+    font-size: 10px;
+    margin-top: 5px;
+    white-space: nowrap;
+  }
+  .writing-surface {
+    padding: 10px 10px 30px;
+  }
+  .writing-paper {
+    padding: 29px 23px 60px;
+  }
+  .writing-chapter-title {
+    font-size: 28px;
+  }
+  .writing-prose {
+    font-size: 17px;
+  }
+  .writing-toolbar select {
+    max-width: 98px;
+    font-size: 10px;
+  }
+  .workspace-publication-summary {
+    padding: 20px;
+    gap: 19px;
+  }
+  .workspace-publication-summary > .pf-book {
+    width: 75px;
+  }
+  .workspace-publishing-row {
+    gap: 12px;
+  }
+  .workspace-publishing-row > span {
+    max-width: 200px;
+  }
+  .workspace-chapter-list h2 {
+    font-size: 22px;
+  }
+  .workspace-chapter-list > button {
+    gap: 17px;
+  }
+  .workspace-codex-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+  }
+  .workspace-entry-mark {
+    font-size: 48px;
+    height: 100px;
+  }
+  .workspace-codex-card > button {
+    padding: 15px;
+  }
+  .workspace-codex-card h2 {
+    font-size: 20px;
+    overflow-wrap: anywhere;
+  }
+  .workspace-view-heading > .pf-button {
+    font-size: 11px;
+  }
+  .writing-link-form {
+    flex-wrap: wrap;
+  }
+  .writing-link-form label {
+    width: 100%;
+    flex: auto;
+  }
+}
+.nf-workspace .writing-chapter-title {
+  font:
+    clamp(28px, 3vw, 40px)/1.2 Georgia,
+    serif;
+}
+.nf-workspace .floating-paper > input {
+  font:
+    21px Georgia,
+    serif;
+}
+.nf-workspace .floating-paper > textarea {
+  font:
+    14px/1.8 Georgia,
+    serif;
+}
+.workspace-nav-collapsed .workspace-sidebar {
+  width: 0;
+  padding-inline: 0;
+  border: 0;
+  overflow: hidden;
+}
+.workspace-desk-heading p,
+.workspace-codex-card p,
+.workspace-fragment p {
+  color: #727d62;
+}
+.workspace-outline small,
+.workspace-chapter-list small,
+.workspace-chapter-nav small {
+  color: #7b886a;
+  font-size: 10px;
+}
+.workspace-sidebar nav > button {
+  color: #657552;
+}
+.workspace-fragment small,
+.workspace-sidebar-book > span {
+  color: #7a866a;
+  font-size: 10px;
+}
+@media (max-width: 767px) {
+  .workspace-nav-collapsed .workspace-sidebar {
+    width: 260px;
+    padding-inline: 17px;
+  }
+  .nf-workspace .writing-chapter-title {
+    font-size: 30px;
+  }
+}
+@media (max-width: 430px) {
+  .nf-workspace .writing-chapter-title {
+    font-size: 28px;
+  }
+}
+.nf-workspace .writing-chapter-title {
+  resize: none;
+  field-sizing: content;
+  min-height: 1.3em;
+  overflow: hidden;
+  display: block;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 430px) {
+  .workspace-header {
+    padding-right: 20px;
+  }
+  .workspace-book-name {
+    max-width: 36vw;
+  }
+}
